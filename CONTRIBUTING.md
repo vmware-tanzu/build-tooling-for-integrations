@@ -1,9 +1,6 @@
-# Contributing to build-tooling-for-integrations
+# Contributing to Build Tooling for Integrations
 
-The build-tooling-for-integrations project team welcomes contributions from the community. Before you start working with build-tooling-for-integrations, please
-read our [Developer Certificate of Origin](https://cla.vmware.com/dco). All contributions to this repository must be
-signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on
-as an open-source patch.
+The build-tooling-for-integrations project team welcomes contributions from the community. If you wish to contribute code and you have not signed our [Contributor License Agreement](https://cla.vmware.com/cla/1/preview), our bot will update the issue when you open a Pull Request. For any questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq).
 
 ## Contribution Flow
 
