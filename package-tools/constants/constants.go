@@ -1,0 +1,22 @@
+// Copyright 2022 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+package constants
+
+const (
+
+	// ToolsBinDirPath is the tools bin directory path
+	ToolsBinDirPath = "hack/tools/bin"
+
+	// PackageBundlesDir is the path to generated package bundles
+	PackageBundlesDir = "build/package-bundles"
+
+	// PackageValuesFilePath is the path to package-values.yaml file
+	PackageValuesFilePath = "packages/package-values.yaml"
+
+	// PackageValuesSha256FilePath is the path to package-values-sha256.yaml file
+	PackageValuesSha256FilePath = "packages/package-values-sha256.yaml"
+
+	// RepoBundlesDir is the path to the generated repo bundles
+	RepoBundlesDir = "build/package-repo-bundles"
+)

@@ -1,4 +1,11 @@
-# Ignore everything in this directory
+# Ignore everything
 *
-# Except this file
+
+# Except these files
 !.gitignore
+
+!*.go
+!go.sum
+!go.mod
+
+!*.yaml
