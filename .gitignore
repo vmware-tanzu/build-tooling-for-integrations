@@ -8,4 +8,8 @@
 !go.sum
 !go.mod
 
+!Dockerfile
+
 !*.yaml
+
+!*.sh
