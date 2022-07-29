@@ -9,6 +9,7 @@
 !go.mod
 
 !Dockerfile
+!Makefile
 
 !*.yaml
 
