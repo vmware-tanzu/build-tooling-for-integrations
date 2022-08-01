@@ -1,0 +1,5 @@
+apiVersion: kbld.k14s.io/v1alpha1
+kind: Config
+overrides:
+- image: my-integration-manager:latest
+  newImage: quay.io/hyayiv/my-integration-manager:latest

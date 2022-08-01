@@ -1,6 +1,6 @@
 IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
-COMPONENTS ?= ""?""?""
+COMPONENTS ?= ""?my-integration-manager?my-integration
 
 .PHONY: init
 init: ## Fetch the Dockerfile and pull image needed to build packages

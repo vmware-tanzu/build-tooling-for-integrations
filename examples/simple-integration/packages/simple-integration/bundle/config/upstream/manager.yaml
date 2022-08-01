@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-integration-manager
+  labels:
+    app: simple-integration-manager
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: simple-integration-manager
+  template:
+    metadata:
+      labels:
+        app: simple-integration-manager
+    spec:
+      containers:
+        - name: manager
+          image: simple-integration-manager:latest
+          ports:
+            - containerPort: 80
