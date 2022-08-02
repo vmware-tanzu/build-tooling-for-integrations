@@ -12,6 +12,7 @@
 !Dockerfile
 !Makefile
 
+!*.md
 !*.yaml
 
 !*.sh

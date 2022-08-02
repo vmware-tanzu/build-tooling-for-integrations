@@ -7,11 +7,11 @@
 Tanzu is highly extensible by design. This extensibility allows developers to add new capabilities to their management
 or workload clusters, or introduce new types of interactions with the cluster.
 
-This project enables developers to start building and packaging new Tanzu integrations&mdash;including cluster packages and
-custom CLI commands&mdash;without prior Tanzu experience. It does so by curating and maintaining a build environment that
-produces consistent artifacts according to Tanzu’s specifications and recommendations. It allows developers to focus on
-what value they are trying to add to the cluster, rather than the tooling and processes required to make it available
-in Tanzu. A portable and validated build environment, and familiar-feeling Make targets are
+This project enables developers to start building and packaging new Tanzu integrations&mdash;including cluster packages 
+and custom CLI commands&mdash;without prior Tanzu experience. It does so by curating and maintaining a build environment
+that produces consistent artifacts according to Tanzu’s specifications and recommendations. It allows developers to 
+focus on what value they are trying to add to the cluster, rather than the tooling and processes required to make it 
+available in Tanzu. A portable and validated build environment, and familiar-feeling Make targets are
 provided by this project to do all the heavy lifting.
 
 Refer to the following table to help decide if Build Tooling is right for you:
@@ -24,7 +24,7 @@ Refer to the following table to help decide if Build Tooling is right for you:
 | ...retire early                                                   | :x:                       |
 
 
-## Quick Start
+## Try it out
 
 ### Prerequisites
 
@@ -33,12 +33,17 @@ Refer to the following table to help decide if Build Tooling is right for you:
 
 ### Build & Run
 
-1. Copy the [`Makefile`](./templates/Makefile) into your project directory
-2. Run `make init`
-3. Write your code
-4. Use the built in make targets for building, testing, and packaging your Tanzu integration
+The [Getting Started documentation](docs/build-tooling-getting-started.md) provides a getting started guide and 
+information about building tooling.
 
-## Documentation
+## Project Structure
+
+templates - contains templates such as Dockerfile, Makefile to get started with build tooling.
+
+package-tools - contains a go module that can be used to build package and repo bundles.
+
+package-tooling-image - contains Dockerfile and other needed files to build package tooling image to use package tooling
+in a containerized environment.
 
 ## Contributing
 
