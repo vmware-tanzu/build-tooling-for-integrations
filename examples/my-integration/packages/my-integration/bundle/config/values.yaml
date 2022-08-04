@@ -1,6 +1,0 @@
-#@data/values
----
-
-#! User configurable values for my-integration.
-
-foo: bar

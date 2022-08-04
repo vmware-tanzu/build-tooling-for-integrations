@@ -1,10 +1,10 @@
 apiVersion: data.packaging.carvel.dev/v1alpha1
 kind: PackageMetadata
 metadata:
-  name: my-integration.tanzu.vmware.com
-  namespace: my-integration
+  name: module2.tanzu.vmware.com
+  namespace: module2
 spec:
-  displayName: "my-integration"
+  displayName: "module2"
   longDescription: ""
   shortDescription: ""
   providerName: VMware

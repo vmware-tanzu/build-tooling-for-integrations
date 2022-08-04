@@ -4,7 +4,7 @@ repositories:
   management:
     version: null
     sha256: latest
-    name: my-repo
+    name: simple-repo
     domain: example.com
     registry: registry
 
@@ -16,11 +16,19 @@ repositories:
         kubeAPIBurst: 30
 
     packages:
-      - name: my-integration
-        displayName: my-integration
+      - name: module1
+        displayName: module1
         #! Relative path to package bundle
-        path: packages/my-integration
+        path: packages/module1
         domain: example.com
         version: latest
         #! Gets replaced with imgpkg sha256 at build, this should be name:version
-        sha256: "my-integration-manager:latest"
+        sha256: "module1-manager:latest"
+      - name: module2
+        displayName: module2
+        #! Relative path to package bundle
+        path: packages/module2
+        domain: example.com
+        version: latest
+        #! Gets replaced with imgpkg sha256 at build, this should be name:version
+        sha256: "module2-manager:latest"

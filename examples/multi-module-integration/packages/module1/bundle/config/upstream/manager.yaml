@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-integration-manager
+  name: module1-manager
   labels:
-    app: my-integration-manager
+    app: module1-manager
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: my-integration-manager
+      app: module1-manager
   template:
     metadata:
       labels:
-        app: my-integration-manager
+        app: module1-manager
     spec:
       containers:
         - name: manager
-          image: my-integration-manager:latest
+          image: module1-manager:latest
           ports:
             - containerPort: 80

@@ -1,12 +1,12 @@
-# my-integration Package
+# module2 Package
 
-This package provides << awesome functionality >> using [my-integration](https://INFO_NEEDED).
+This package provides << awesome functionality >> using [module2](https://INFO_NEEDED).
 
 ## Components
 
 ## Configuration
 
-The following configuration values can be set to customize the my-integration installation.
+The following configuration values can be set to customize the module2 installation.
 
 ### Global
 
@@ -14,7 +14,7 @@ The following configuration values can be set to customize the my-integration in
 |-------|-------------------|-------------|
 | `name` | Optional | description |
 
-### my-integration Configuration
+### module2 Configuration
 
 | Value | Required/Optional | Description |
 |-------|-------------------|-------------|
@@ -22,4 +22,4 @@ The following configuration values can be set to customize the my-integration in
 
 ## Usage Example
 
-The following is a basic guide for getting started with my-integration.
+The following is a basic guide for getting started with module2.
