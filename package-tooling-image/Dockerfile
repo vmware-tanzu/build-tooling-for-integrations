@@ -23,7 +23,7 @@ RUN apt-get update && \
 
 RUN curl -sSL https://get.docker.com/ | sh
 
-RUN go install github.com/vmware-tanzu/build-tooling-for-integrations.gitpackage-tools@main
+RUN go install github.com/vmware-tanzu/build-tooling-for-integrations/package-tools@main
 
 COPY build-packages.sh /build-packages.sh
 ENTRYPOINT ["/build-packages.sh"]
