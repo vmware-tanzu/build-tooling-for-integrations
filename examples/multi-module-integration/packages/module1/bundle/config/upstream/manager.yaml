@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: module1-manager
+  labels:
+    app: module1-manager
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: module1-manager
+  template:
+    metadata:
+      labels:
+        app: module1-manager
+    spec:
+      containers:
+        - name: manager
+          image: module1-manager:latest
+          ports:
+            - containerPort: 80

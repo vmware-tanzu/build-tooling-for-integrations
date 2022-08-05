@@ -13,7 +13,9 @@
 !Makefile
 
 !*.md
+
 !*.yaml
+!*.yml
 
 !*.sh
 

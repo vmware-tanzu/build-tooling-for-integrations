@@ -1,0 +1,14 @@
+apiVersion: data.packaging.carvel.dev/v1alpha1
+kind: PackageMetadata
+metadata:
+  name: simple-integration.tanzu.vmware.com
+  namespace: simple-integration
+spec:
+  displayName: "simple-integration"
+  longDescription: ""
+  shortDescription: ""
+  providerName: VMware
+  maintainers:
+    - name: ""
+  categories:
+    - ""

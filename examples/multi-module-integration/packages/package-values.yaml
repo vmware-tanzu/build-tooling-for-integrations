@@ -1,0 +1,34 @@
+#@data/values
+---
+repositories:
+  management:
+    version: null
+    sha256: latest
+    name: simple-repo
+    domain: example.com
+    registry: registry
+
+    packageSpec:
+      syncPeriod: 5m
+      deploy:
+        kappWaitTimeout: 5m
+        kubeAPIQPS: 20
+        kubeAPIBurst: 30
+
+    packages:
+      - name: module1
+        displayName: module1
+        #! Relative path to package bundle
+        path: packages/module1
+        domain: example.com
+        version: latest
+        #! Gets replaced with imgpkg sha256 at build, this should be name:version
+        sha256: "module1-manager:latest"
+      - name: module2
+        displayName: module2
+        #! Relative path to package bundle
+        path: packages/module2
+        domain: example.com
+        version: latest
+        #! Gets replaced with imgpkg sha256 at build, this should be name:version
+        sha256: "module2-manager:latest"
