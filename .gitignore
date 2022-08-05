@@ -11,6 +11,7 @@
 
 !Dockerfile
 !Makefile
+!oci.env
 
 !*.md
 
