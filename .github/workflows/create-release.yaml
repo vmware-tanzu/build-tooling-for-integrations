@@ -1,0 +1,68 @@
+name: Create Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (e.g. 1.2.3) (the preceding v will be added automatically)'
+        required: true
+jobs:
+  createrelease:
+    if: github.repository == 'vmware-tanzu/build-tooling-for-integrations'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Create release branch
+        run: git checkout -b release/v${{ github.event.inputs.version }}
+      - name: Initialize mandatory git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email noreply@github.com
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update changelog
+        uses: thomaseizinger/keep-a-changelog-new-release@1.1.0
+        with:
+          version: v${{ github.event.inputs.version }}
+      - name: Update the version
+        run: printf 'v${{ github.event.inputs.version }}\n' > version
+      - name: Commit version and changelog
+        id: make-commit
+        run: |
+          git add version CHANGELOG.md
+          git commit --message "Update version to v${{ github.event.inputs.version }}; Update CHANGELOG"
+          echo "::set-output name=commit::$(git rev-parse HEAD)"
+      - name: Create Release
+        uses: thomaseizinger/create-release@1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          tag_name: v${{ github.event.inputs.version }}
+          name: v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+      - name: Push new branch
+        run: git push origin release/v${{ github.event.inputs.version }}
+      - name: Create pull request into main
+        uses: thomaseizinger/create-pull-request@1.0.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          head: release/v${{ github.event.inputs.version }}
+          base: main
+          title: v${{ github.event.inputs.version }} into main
+          reviewers: ${{ github.event.issue.user.login }}
+          body: |
+            This PR was created in response to a workflow running.
+      - name: Publish Go Module
+        run: GOPROXY=proxy.golang.org go list -m github.com/vmware-tanzu/build-tooling-for-integrations@v${{ github.event.inputs.version }}
+      - name: Run build, tag and publish tasks
+        run: |
+          set -e -x
+          echo "Build and Publish build-tooling and package-tooling..."
+          make build-tag-publish-all

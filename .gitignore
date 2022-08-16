@@ -20,5 +20,8 @@
 
 !*.sh
 
+!version
+
 # ...even if they are in subdirectories
 !*/
+.idea

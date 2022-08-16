@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/vmware-tanzu/carvel-imgpkg/pkg/imgpkg/lockconfig"
 	"github.com/vmware-tanzu/build-tooling-for-integrations/package-tools/constants"
 	"github.com/vmware-tanzu/build-tooling-for-integrations/package-tools/utils"
+	"github.com/vmware-tanzu/carvel-imgpkg/pkg/imgpkg/lockconfig"
 )
 
 var packageValuesFile, registry string
@@ -317,7 +317,7 @@ func generatePackageCR(projectRootDir, toolsBinDir, registry, packageArtifactDir
 		return fmt.Errorf("couldn't generate Package CR %s: %s", pkg.Name, packageYttCmdErrBytes.String())
 	}
 
-	// generate PacakageMetadata CR and write it to a file
+	// generate PackageMetadata CR and write it to a file
 	packageMetadataYttCmd := exec.Command(
 		filepath.Join(toolsBinDir, "ytt"), "-f", filepath.Join(projectRootDir, "packages", pkg.Name, "metadata.yaml"),
 		"-f-",
