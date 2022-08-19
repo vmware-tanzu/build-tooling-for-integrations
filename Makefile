@@ -19,7 +19,7 @@ oci-login: ## Login to the OCI Registry
 
 .PHONY: build
 build: ## Build the Docker container image
-	docker build --tag $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/$(IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKERFILE_PATH)
+	docker build --tag $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/$(IMAGE_NAME):$(DOCKER_IMAGE_TAG) --file $(DOCKERFILE_PATH)
 
 .PHONY: publish
 publish: ## Publish the container image
