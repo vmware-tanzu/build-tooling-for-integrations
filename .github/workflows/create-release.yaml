@@ -31,11 +31,19 @@ jobs:
           version: v${{ github.event.inputs.version }}
       - name: Update the version
         run: printf 'v${{ github.event.inputs.version }}\n' > version
-      - name: Commit version and changelog
+      - name: Update Makefiles and Dockerfile
+        run: |
+          sed '/^VERSION/s/.*/VERSION ?= v${{ github.event.inputs.version }}/g' templates/Makefile > makefile-version-update
+          mv makefile-version-update templates/Makefile
+          cp templates/Makefile examples/multi-module-integration
+          cp templates/Makefile examples/simple-integration
+          sed '/^ENV PACKAGE_TOOLS_VERSION/s/.*/ENV PACKAGE_TOOLS_VERSION v${{ github.event.inputs.version }}/g' package-tooling-image/Dockerfile > tmp-dockerfile
+          mv tmp-dockerfile package-tooling-image/Dockerfile
+      - name: Commit release updates
         id: make-commit
         run: |
-          git add version CHANGELOG.md
-          git commit --message "Update version to v${{ github.event.inputs.version }}; Update CHANGELOG"
+          git add version CHANGELOG.md examples/ package-tooling-image/Dockerfile templates/Makefile
+          git commit --message "Updates for release v${{ github.event.inputs.version }}"
           echo "::set-output name=commit::$(git rev-parse HEAD)"
       - name: Create Release
         uses: thomaseizinger/create-release@1.0.0
