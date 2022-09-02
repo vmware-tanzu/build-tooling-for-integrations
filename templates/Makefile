@@ -1,6 +1,6 @@
 IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
-COMPONENTS ?= ""?""?""
+COMPONENTS ?= ""."".""
 
 .PHONY: init
 init: ## Fetch the Dockerfile and pull image needed to build packages
@@ -15,28 +15,32 @@ docker-all: $(COMPONENTS) ## Run linter, tests, build and publish images
 
 .PHONY: $(COMPONENTS)
 $(COMPONENTS):
-	$(eval COMPONENT = $(word 1,$(subst ?, ,$@)))
-	$(eval IMAGE_NAME = $(word 2,$(subst ?, ,$@)))
-	$(eval PACKAGE_PATH = $(word 3,$(subst ?, ,$@)))
+	$(eval COMPONENT_PATH = $(word 1,$(subst ., ,$@)))
+	$(eval IMAGE_NAME = $(word 2,$(subst ., ,$@)))
+	$(eval PACKAGE_PATH = $(word 3,$(subst ., ,$@)))
 	$(eval IMAGE = $(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
+	$(eval DEFAULT_IMAGE = $(IMAGE_NAME):$(IMG_DEFAULT_TAG))
 ifneq ($(strip $(OCI_REGISTRY)),)
 	$(eval IMAGE = $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 endif
-	$(eval KBLD_CONFIG_FILE_PATH = packages/$(PACKAGE_PATH)/kbld-config.yaml)
-	$(eval DEFAULT_IMAGE = $(IMAGE_NAME):$(IMG_DEFAULT_TAG))
+	make component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
+
+.PHONY: component-all
+component-all:
+ifeq ($(COMPONENT_PATH),)
+	$(eval COMPONENT = .)
+else
+	$(eval COMPONENT = $(COMPONENT_PATH))
+endif
 	make COMPONENT=$(COMPONENT) lint
 	make COMPONENT=$(COMPONENT) test
 	make IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
 	make IMAGE=$(IMAGE) docker-publish
-	make KBLD_CONFIG_FILE_PATH=$(KBLD_CONFIG_FILE_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
+	make KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
 
 .PHONY: docker-build
 docker-build: ## Build docker image
-ifneq ($(strip $(COMPONENT)),)
 	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-context component=$(COMPONENT) --load .
-else
-	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-context component=. --load .
-endif
 
 .PHONY: docker-publish
 docker-publish: ## Publish docker image
@@ -44,37 +48,25 @@ docker-publish: ## Publish docker image
 
 .PHONY: lint
 lint: ## Run linting
-ifneq ($(strip $(COMPONENT)),)
+ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
 	docker build . -f Dockerfile --target lint --build-context component=$(COMPONENT)
 	rm -rf $(COMPONENT)/.golangci.yaml
 else
-	docker build . -f Dockerfile --target lint --build-context component=.
+	docker build . -f Dockerfile --target lint --build-context component=$(COMPONENT)
 endif
 
 .PHONY: fmt
 fmt: ## Run go fmt against code
-ifneq ($(strip $(COMPONENT)),)
 	cd $(COMPONENT) && go fmt ./...
-else
-	go fmt ./...
-endif
 
 .PHONY: vet
 vet: ## Perform static analysis of code
-ifneq ($(strip $(COMPONENT)),)
 	cd $(COMPONENT) && go vet ./...
-else
-	go vet ./...
-endif
 
 .PHONY: test
 test: fmt vet ## Run tests
-ifneq ($(strip $(COMPONENT)),)
 	docker build . -f Dockerfile --target test --build-context component=$(COMPONENT)
-else
-	docker build . -f Dockerfile --target test --build-context component=.
-endif
 
 .PHONY: kbld-image-replace
 kbld-image-replace: ## Add newImage in kbld-config.yaml

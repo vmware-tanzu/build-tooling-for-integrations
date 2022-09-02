@@ -17,11 +17,11 @@ integrations.
 
    For the build tooling to understand where your components are located, it needs the `COMPONENTS` variable to be set.
    You can set the `COMPONENTS` variable either in the makefile or as an environment variable. We need to provide the
-   component's location, default image name and the package name of the component delimited by a `?` something like
+   component's location, default image name and the package name of the component delimited by a `.` something like
    below:
 
    ```
-   COMPONENTS ?= featuregates?featuregates-controller-manager?featuregates
+   COMPONENTS ?= featuregates.featuregates-controller-manager.featuregates
    ```
 
    Here `featuregates` is the path to the featuregates component from project's root directory, `featuregates-controller-manager`
@@ -32,7 +32,7 @@ integrations.
    do that by setting multiple components to the COMPONENTS variable. For example:
 
    ```
-   COMPONENTS ?= featuregates?featuregates-controller-manager?featuregates capabilities?capabilities-controller-manager?capabilities
+   COMPONENTS ?= featuregates.featuregates-controller-manager.featuregates capabilities.capabilities-controller-manager.capabilities
    ```
 
 3. Run make init
