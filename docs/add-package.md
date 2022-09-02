@@ -1,19 +1,19 @@
 # Add a package to package repository
 
-This document provides guidance on how to add a package to a package repository and test it.
+This document provides guidance on how to add a package to a package repository.
 
 ## Steps to add a package to a package repository
 
-Let's take the example of adding a package to `management` package repository.
-Below are steps to illustrate how that can be done.
+Below are steps to add a package to the package repository:
 
-1. Copy the `my-package` directory from `examples` directory in this repo to the packages directory in your project
+1. Copy the `simple-integration` directory from `examples/simple-integration/packages` directory in this repo to the 
+   packages directory in your project
 
-   The tree structure of `my-package` directory would look something like below and needs to be changed to use your
+   The tree structure of package directory would look something like below and needs to be changed to use your
    package name.
 
    ```plain
-    packages/my-package
+    packages/simple-integration
     ├── Makefile
     ├── README.md
     ├── bundle
@@ -42,38 +42,14 @@ Below are steps to illustrate how that can be done.
 
 3. Update kbld-config.yaml [optional]
 
-   If the container image in your config needs to be replaced by an image at build time, add an entry like below in the
-   kbld-config.yaml file in `packages/my-package` directory.
+   If the container image in your config needs to be replaced by an image at build time, add/update an entry like below in the
+   kbld-config.yaml file in your package directory.
 
    ```yaml
-       - image: "mycomponent:latest"
+       - image: "simple-integration-manager:latest"
          newImage: ""
    ```
-4. Add package-values.yaml file to the packages directory [optional]
-
-   Package tooling uses package-values.yaml file to build package and repo bundles. If this is a new project this file
-   needs to be created under `packages` directory, else skip to step 5.
-
-   Below is a sample package-values.yaml file:
-
-   ```
-   #@data/values
-   ---
-   repositories:
-     management:
-       name: management
-       domain: tanzu.vmware.com
-       packageSpec:
-         syncPeriod: 5m
-         deploy:
-           kappWaitTimeout: 5m
-           kubeAPIQPS: 20
-           kubeAPIBurst: 30
-       packages:
-    ```
-   Example: https://github.com/vmware-tanzu/tanzu-framework/blob/main/packages/package-values.yaml
-   
-5. Update package-values.yaml to add your package details
+4. Update package-values.yaml to add your package details
 
    `package-values.yaml` contains Ytt data values for all packages and package repositories.
 
@@ -81,19 +57,10 @@ Below are steps to illustrate how that can be done.
 
    ```yaml
          #! package name
-       - name: my-package
+       - name: simple-integration
          #! Relative path to package bundle
-         path: packages/my-package
+         path: packages/simple-integration
          domain: tanzu.vmware.com
          version: latest
-         #! this should be name:version(my-package:latest), will be replaced at build time
-         sha256: "my-package:latest"
+         sha256: "simple-integration:latest"
    ```
-
-6. Test the package bundle generation
-   Run `all` make target by passing all the vars needed to build the images and package bundles.
-
-   ```shell
-   make all
-   ```
-
