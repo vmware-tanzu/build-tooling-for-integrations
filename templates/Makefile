@@ -23,7 +23,16 @@ $(COMPONENTS):
 ifneq ($(strip $(OCI_REGISTRY)),)
 	$(eval IMAGE = $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 endif
+	make validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
 	make component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
+
+.PHONY: evaluate-component
+validate-component:
+ifeq ($(strip $(IMAGE_NAME)),)
+	$(error Image name of the component is not set in COMPONENTS variable, check https://github.com/vmware-tanzu/build-tooling-for-integrations/blob/main/docs/build-tooling-getting-started.md#steps-to-use-the-build-tooling for more help)
+else ifeq ($(strip $(PACKAGE_PATH)),)
+	$(error Path to the package of the component is not set in COMPONENTS variable, check https://github.com/vmware-tanzu/build-tooling-for-integrations/blob/main/docs/build-tooling-getting-started.md#steps-to-use-the-build-tooling for more help)
+endif
 
 .PHONY: component-all
 component-all:
