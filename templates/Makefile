@@ -2,10 +2,14 @@ IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
 COMPONENTS ?= ""."".""
 
+BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
+PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
+VERSION ?= v0.0.9
+
 .PHONY: init
 init: ## Fetch the Dockerfile and pull image needed to build packages
-	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh quay.io/hyayiv/build-tooling:latest -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
-    docker pull quay.io/hyayiv/packaging:latest
+	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
+    docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: all
 all: docker-all package-vendir-sync package-bundle-generate-all package-bundle-push-all ## Run linter, tests, build and publish images and packages
@@ -77,7 +81,7 @@ kbld-image-replace: ## Add newImage in kbld-config.yaml
 	  -e NEW_IMAGE=$(IMAGE) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 
 .PHONY: package-bundle-generate
@@ -91,7 +95,7 @@ package-bundle-generate: ## Generate package bundle for a particular package
 	  -e PACKAGE_SUB_VERSION=$(PACKAGE_SUB_VERSION) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-generate-all
 package-bundle-generate-all: ## Generate package bundle for all packages
@@ -104,7 +108,7 @@ package-bundle-generate-all: ## Generate package bundle for all packages
 	  -e PACKAGE_SUB_VERSION=$(PACKAGE_SUB_VERSION) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-push
 package-bundle-push: ## Push a particular package bundle
@@ -119,7 +123,7 @@ package-bundle-push: ## Push a particular package bundle
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-push-all
 package-bundle-push-all: ## Push all package bundles
@@ -134,7 +138,7 @@ package-bundle-push-all: ## Push all package bundles
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: repo-bundle-generate
 repo-bundle-generate: ## Generate repo bundle
@@ -147,7 +151,7 @@ repo-bundle-generate: ## Generate repo bundle
 	  -e PACKAGE_VALUES_FILE=$(PACKAGE_VALUES_FILE) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: repo-bundle-push
 repo-bundle-push: ## Push repo bundle
@@ -162,7 +166,7 @@ repo-bundle-push: ## Push repo bundle
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-vendir-sync
 package-vendir-sync: ## Performs vendir sync on each package
@@ -170,7 +174,7 @@ package-vendir-sync: ## Performs vendir sync on each package
 	  -e OPERATIONS=vendir_sync \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
-		quay.io/hyayiv/packaging:latest
+		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: help
 help: ## Show help
