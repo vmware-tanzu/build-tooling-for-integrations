@@ -317,7 +317,7 @@ func generatePackageCR(projectRootDir, toolsBinDir, registry, packageArtifactDir
 		return fmt.Errorf("couldn't generate Package CR %s: %s", pkg.Name, packageYttCmdErrBytes.String())
 	}
 
-	// generate PacakageMetadata CR and write it to a file
+	// generate PackageMetadata CR and write it to a file
 	packageMetadataYttCmd := exec.Command(
 		filepath.Join(toolsBinDir, "ytt"), "-f", filepath.Join(projectRootDir, "packages", pkg.Name, "metadata.yaml"),
 		"-f-",
