@@ -1,9 +1,12 @@
 FROM bitnami/golang:1.17
 
+LABEL org.opencontainers.image.source=https://github.com/vmware-tanzu/build-tooling-for-integrations
+
 ENV DOCKER_CE_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV DOCKER_CE_CLI_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV CONTAINERD_VERSION 1.5.11-1
 ENV GOVERSION 1.17.7
+ENV PACKAGE_TOOLS_VERSION v0.0.1
 
 RUN apt-get update && \
     apt-get install -y make gnupg lsb-release
@@ -23,7 +26,7 @@ RUN apt-get update && \
 
 RUN curl -sSL https://get.docker.com/ | sh
 
-RUN go install github.com/vmware-tanzu/build-tooling-for-integrations/package-tools@main
+RUN go install github.com/vmware-tanzu/build-tooling-for-integrations/package-tools@${PACKAGE_TOOLS_VERSION}
 
-COPY build-packages.sh /build-packages.sh
+COPY package-tooling-image/build-packages.sh /build-packages.sh
 ENTRYPOINT ["/build-packages.sh"]

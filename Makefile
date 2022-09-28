@@ -17,10 +17,42 @@ help: ## Help
 oci-login: ## Login to the OCI Registry
 	@echo $(OCI_REGISTRY_PASSWORD) | docker login $(OCI_REGISTRY_URL) --username $(OCI_REGISTRY_USERNAME) --password-stdin
 
-.PHONY: build
-build: ## Build the Docker container image
-	docker build --tag $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/$(IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKERFILE_PATH)
+.PHONY: build-main
+build-main: ## Build the Docker container image for build-tooling
+	docker build . --tag build-tooling
 
-.PHONY: publish
-publish: ## Publish the container image
-	docker push $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/$(IMAGE_NAME):$(DOCKER_IMAGE_TAG)
+.PHONY: build-package-tooling
+build-package-tooling: ## Build the Docker container image for package-tooling
+	docker build . --tag package-tooling --file package-tooling-image/Dockerfile
+
+.PHONY: build-all
+build-all: build-main build-package-tooling ## Builds main and package-tooling
+
+.PHONY: tag-build-tooling
+tag-build-tooling: ## Tag the Docker container image for package-tooling with latest and the version
+	docker tag build-tooling $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/build-tooling:$(VERSION)
+	docker tag build-tooling $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/build-tooling:latest
+
+.PHONY: tag-package-tooling
+tag-package-tooling: ## Tag the Docker container image for package-tooling with latest and the version
+	docker tag package-tooling $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/package-tooling:$(VERSION)
+	docker tag package-tooling $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/package-tooling:latest
+
+.PHONY: tag-all
+tag-all: tag-build-tooling tag-package-tooling ## Tags build-tooling and package-tooling
+
+.PHONY: publish-build-tooling
+publish-build-tooling: ## Publish build-tooling
+	docker push $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/build-tooling:$(VERSION)
+	docker push $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/build-tooling:latest
+
+.PHONY: publish-package-tooling
+publish-package-tooling: ## Publish package-tooling
+	docker push $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/package-tooling:$(VERSION)
+	docker push $(OCI_REGISTRY_URL)/$(OCI_REGISTRY_PROJECT)/package-tooling:latest
+
+.PHONY: publish-all
+publish-all: publish-build-tooling publish-package-tooling ## Publish build-tooling and package-tooling
+
+.PHONY: build-tag-publish-all
+build-tag-publish-all: build-all tag-all publish-all ## Build, Tag and Publish build-tooling and package-tooling
