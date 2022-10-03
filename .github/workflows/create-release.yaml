@@ -35,8 +35,6 @@ jobs:
         run: |
           sed '/^VERSION/s/.*/VERSION ?= v${{ github.event.inputs.version }}/g' templates/Makefile > makefile-version-update
           mv makefile-version-update templates/Makefile
-          cp templates/Makefile examples/multi-module-integration
-          cp templates/Makefile examples/simple-integration
           sed '/^ENV PACKAGE_TOOLS_VERSION/s/.*/ENV PACKAGE_TOOLS_VERSION v${{ github.event.inputs.version }}/g' package-tooling-image/Dockerfile > tmp-dockerfile
           mv tmp-dockerfile package-tooling-image/Dockerfile
       - name: Commit release updates
