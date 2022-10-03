@@ -4,7 +4,7 @@ COMPONENTS ?= ""."".""
 
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
-VERSION ?= latest
+VERSION ?= v0.0.1
 
 .PHONY: init
 init: ## Fetch the Dockerfile and pull image needed to build packages
