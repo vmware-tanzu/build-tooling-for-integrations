@@ -1,3 +1,13 @@
+.DEFAULT_GOAL := help
+
+REGISTRY_PORT := 5000
+REGISTRY_ENDPOINT := localhost:$(REGISTRY_PORT)
+PACKAGE_PREFIX := $(REGISTRY_ENDPOINT)
+REGISTRY_NAME := tanzu-integration-registry
+
+DOCKER := docker
+MAKE := make
+
 IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
 COMPONENTS ?= ""."".""
@@ -6,16 +16,69 @@ BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.1
 
+##
+## Project Targets
+##
+
+# Bootstraps a project by creating a copy of the Tanzu build container Dockerfile
+# into the project's root directory (alongside Makefile).
+# This target also installs a local registry if the build is being done in a
+# non-CI environment and it makes sure that the Tanzu packaging container is up to date.
+bootstrap: install-registry check-copy-build-container install-package-container
+
+install-registry:
+ifneq ($(IS_CI),)
+	@echo "Running in CI mode. Skipping local registry setup."
+else
+ifeq ($(shell $(DOCKER) ps -q -f name=$(REGISTRY_NAME) 2> /dev/null),)
+	@echo "Deploying a local Docker registry for Tanzu Integrations"
+	$(DOCKER) run -d -p $(REGISTRY_PORT):$(REGISTRY_PORT) --restart=always --name $(REGISTRY_NAME) registry:2
+	@echo
+endif
+	@echo "Registry for Tanzu Integrations available at $(REGISTRY_ENDPOINT)"
+endif
+
+check-copy-build-container:
+ifneq ("$(wildcard Dockerfile)","")
+	$(eval COPY_BUILD_CONTAINER := $(shell bash -c 'read -p "There is already a Dockerfile in this project. Overwrite? [y/N]: " do_copy; echo $$do_copy'))
+else
+	$(eval COPY_BUILD_CONTAINER := Y)
+endif
+	@$(MAKE) -s COPY_BUILD_CONTAINER=$(COPY_BUILD_CONTAINER) copy-build-container
+
+copy-build-container:
+ifneq ($(filter y Y, $(COPY_BUILD_CONTAINER)),)
+	@$(DOCKER) run --name tanzu-build-tooling $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION)
+	@$(DOCKER) cp tanzu-build-tooling:/Dockerfile ./Dockerfile
+	@$(DOCKER) cp tanzu-build-tooling:/.golangci.yaml ./.golangci.yaml
+	@echo Added Dockerfile for containerize build to $(PWD)
+	@$(DOCKER) rm tanzu-build-tooling 1> /dev/null
+endif
+
+install-package-container:
+	@$(DOCKER) pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
+
+.PHONY: bootstrap install-registry check-copy-build-container copy-build-container install-package-container
+
+
 .PHONY: init
-init: ## Fetch the Dockerfile and pull image needed to build packages
+# Fetch the Dockerfile and pull image needed to build packages
+init:
 	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
     docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
+
+##
+## Other Targets
+##
+
 .PHONY: all
-all: docker-all package-vendir-sync package-bundle-generate-all package-bundle-push-all ## Run linter, tests, build and publish images and packages
+# Run linter, tests, build and publish images and packages
+all: docker-all package-vendir-sync package-bundle-generate-all package-bundle-push-all
 
 .PHONY: docker-all
-docker-all: $(COMPONENTS) ## Run linter, tests, build and publish images
+# Run linter, tests, build and publish images
+docker-all: $(COMPONENTS)
 
 .PHONY: $(COMPONENTS)
 $(COMPONENTS):
@@ -43,15 +106,18 @@ endif
 	make KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
 
 .PHONY: docker-build
-docker-build: ## Build docker image
+# Build docker image
+docker-build:
 	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-context component=$(COMPONENT) --load .
 
 .PHONY: docker-publish
-docker-publish: ## Publish docker image
+# Publish docker image
+docker-publish:
 	docker push $(IMAGE)
 
 .PHONY: lint
-lint: ## Run linting
+# Run linting
+lint:
 ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
 	docker build . -f Dockerfile --target lint --build-context component=$(COMPONENT)
@@ -61,19 +127,23 @@ else
 endif
 
 .PHONY: fmt
-fmt: ## Run go fmt against code
+# Run go fmt against code
+fmt:
 	cd $(COMPONENT) && go fmt ./...
 
 .PHONY: vet
-vet: ## Perform static analysis of code
+# Perform static analysis of code
+vet:
 	cd $(COMPONENT) && go vet ./...
 
 .PHONY: test
-test: fmt vet ## Run tests
+# Run tests
+test: fmt vet
 	docker build . -f Dockerfile --target test --build-context component=$(COMPONENT)
 
 .PHONY: kbld-image-replace
-kbld-image-replace: ## Add newImage in kbld-config.yaml
+# Add newImage in kbld-config.yaml
+kbld-image-replace:
 	@docker run \
 	  -e OPERATIONS=kbld_replace \
 	  -e KBLD_CONFIG_FILE_PATH=$(KBLD_CONFIG_FILE_PATH) \
@@ -85,7 +155,8 @@ kbld-image-replace: ## Add newImage in kbld-config.yaml
 
 
 .PHONY: package-bundle-generate
-package-bundle-generate: ## Generate package bundle for a particular package
+# Generate package bundle for a particular package
+package-bundle-generate:
 	@docker run \
 	  -e OPERATIONS=package_bundle_generate \
 	  -e PACKAGE_NAME=$(PACKAGE_NAME) \
@@ -98,7 +169,8 @@ package-bundle-generate: ## Generate package bundle for a particular package
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-generate-all
-package-bundle-generate-all: ## Generate package bundle for all packages
+# Generate package bundle for all packages
+package-bundle-generate-all:
 	@docker run \
 	  -e OPERATIONS=package_bundle_all_generate \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
@@ -111,7 +183,8 @@ package-bundle-generate-all: ## Generate package bundle for all packages
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-push
-package-bundle-push: ## Push a particular package bundle
+# Push a particular package bundle
+package-bundle-push:
 	@docker run \
 	  -e OPERATIONS=package_bundle_push \
 	  -e PACKAGE_NAME=$(PACKAGE_NAME) \
@@ -126,7 +199,8 @@ package-bundle-push: ## Push a particular package bundle
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-bundle-push-all
-package-bundle-push-all: ## Push all package bundles
+# Push all package bundles
+package-bundle-push-all:
 	@docker run \
 	  -e OPERATIONS=package_bundle_all_push \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
@@ -141,7 +215,8 @@ package-bundle-push-all: ## Push all package bundles
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: repo-bundle-generate
-repo-bundle-generate: ## Generate repo bundle
+# Generate repo bundle
+repo-bundle-generate:
 	@docker run \
 	  -e OPERATIONS=repo_bundle_generate \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
@@ -154,7 +229,8 @@ repo-bundle-generate: ## Generate repo bundle
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: repo-bundle-push
-repo-bundle-push: ## Push repo bundle
+# Push repo bundle
+repo-bundle-push:
 	@docker run \
 	  -e OPERATIONS=repo_bundle_push \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
@@ -169,7 +245,8 @@ repo-bundle-push: ## Push repo bundle
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: package-vendir-sync
-package-vendir-sync: ## Performs vendir sync on each package
+# Performs vendir sync on each package
+package-vendir-sync:
 	@docker run \
 	  -e OPERATIONS=vendir_sync \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
@@ -177,5 +254,6 @@ package-vendir-sync: ## Performs vendir sync on each package
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 .PHONY: help
-help: ## Show help
-	@egrep -h '\s##\s' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m  %-30s\033[0m %s\n", $$1, $$2}'
+# Show help
+help:
+	@cat $(MAKEFILE_LIST) | docker run --rm -i xanders/make-help
