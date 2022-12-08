@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-REGISTRY_PORT := 5000
+REGISTRY_PORT := 8000
 REGISTRY_ENDPOINT := localhost:$(REGISTRY_PORT)
 PACKAGE_PREFIX := $(REGISTRY_ENDPOINT)
 REGISTRY_NAME := tanzu-integration-registry
@@ -17,7 +17,7 @@ PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.1
 
 ##
-## Project Targets
+## Project Initialization Targets
 ##
 
 # Bootstraps a project by creating a copy of the Tanzu build container Dockerfile
@@ -32,7 +32,7 @@ ifneq ($(IS_CI),)
 else
 ifeq ($(shell $(DOCKER) ps -q -f name=$(REGISTRY_NAME) 2> /dev/null),)
 	@echo "Deploying a local Docker registry for Tanzu Integrations"
-	$(DOCKER) run -d -p $(REGISTRY_PORT):$(REGISTRY_PORT) --restart=always --name $(REGISTRY_NAME) registry:2
+	$(DOCKER) run -d -p $(REGISTRY_PORT):5000 --restart=always --name $(REGISTRY_NAME) registry:2
 	@echo
 endif
 	@echo "Registry for Tanzu Integrations available at $(REGISTRY_ENDPOINT)"
@@ -65,7 +65,7 @@ install-package-container:
 # Fetch the Dockerfile and pull image needed to build packages
 init:
 	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
-    docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
+	docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 
 ##
