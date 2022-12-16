@@ -28,8 +28,7 @@ Refer to the following table to help decide if Build Tooling is right for you:
 
 ### Prerequisites
 
-1. A development machine with `make`, `docker` and `buildx` with version v0.8 or up installed. If you install Docker 
-   desktop, then it is not explicitly needed to install `buildx` as it is included by default.
+1. A development machine with `make`, `docker` installed.
 2. A project directory for your Tanzu integration code
 
 ### Build & Run
