@@ -10,6 +10,7 @@ MAKE := make
 
 IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
+PLATFORM=local
 COMPONENTS ?= ""."".""
 
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
@@ -92,7 +93,7 @@ endif
 	$(MAKE) validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
 	$(MAKE) component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
 
-.PHONY: evaluate-component
+.PHONY: validate-component
 validate-component:
 ifeq ($(strip $(IMAGE_NAME)),)
 	$(error Image name of the component is not set in COMPONENTS variable, check https://github.com/vmware-tanzu/build-tooling-for-integrations/blob/main/docs/build-tooling-getting-started.md#steps-to-use-the-build-tooling for more help)
@@ -112,16 +113,6 @@ endif
 	$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
 	$(MAKE) IMAGE=$(IMAGE) docker-publish
 	$(MAKE) KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
-
-.PHONY: docker-build
-# Build docker image
-docker-build:
-	$(DOCKER) build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
-
-.PHONY: docker-publish
-# Publish docker image
-docker-publish:
-	$(DOCKER) push $(IMAGE)
 
 .PHONY: lint
 # Run linting
@@ -149,6 +140,21 @@ vet:
 test: fmt vet
 	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
 
+.PHONY: docker-build
+# Build docker image
+docker-build:
+	$(DOCKER) build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
+
+.PHONY: docker-publish
+# Publish docker image
+docker-publish:
+	$(DOCKER) push $(IMAGE)
+
+.PHONY: generate-binary
+# Generate binary
+generate-binary:
+	$(DOCKER) build -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output bin/$(COMPONENT) --platform ${PLATFORM} --build-context component=$(COMPONENT) .
+
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
 kbld-image-replace:
@@ -160,7 +166,6 @@ kbld-image-replace:
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
-
 
 .PHONY: package-bundle-generate
 # Generate package bundle for a particular package
