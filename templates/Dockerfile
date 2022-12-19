@@ -5,7 +5,7 @@
 
 ARG BUILDER_BASE_IMAGE=golang:1.17
 
-FROM $BUILDER_BASE_IMAGE as base
+FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE as base
 WORKDIR /workspace
 # Copy the go source
 COPY --from=component . ./
@@ -31,11 +31,13 @@ RUN --mount=target=.,from=component \
 
 # Build the manager binary
 FROM base as builder
+ARG TARGETOS
+ARG TARGETARCH
 ARG LD_FLAGS
 ENV LD_FLAGS="$LD_FLAGS "'-extldflags "-static"'
 RUN --mount=target=.,from=component \
     --mount=type=cache,target=/go/pkg/mod \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o /out/manager ./main.go
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -o /out/manager ./main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -45,3 +47,17 @@ COPY --from=builder /out/manager .
 USER nonroot:nonroot
 
 ENTRYPOINT ["/manager"]
+
+FROM scratch AS unit-test-coverage
+COPY --from=unit-test /out/cover.out /cover.out
+
+FROM scratch AS bin-unix
+COPY --from=builder /out/manager /
+
+FROM bin-unix AS bin-linux
+FROM bin-unix AS bin-darwin
+
+FROM scratch AS bin-windows
+COPY --from=builder /out/manager /manager.exe
+
+FROM bin-${TARGETOS} as bin
