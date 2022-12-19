@@ -67,7 +67,6 @@ init:
 	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
 	docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
-
 ##
 ## Other Targets
 ##
@@ -117,7 +116,7 @@ endif
 .PHONY: docker-build
 # Build docker image
 docker-build:
-	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-context component=$(COMPONENT) --load .
+	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
 
 .PHONY: docker-publish
 # Publish docker image
@@ -129,10 +128,10 @@ docker-publish:
 lint:
 ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
-	docker build . -f Dockerfile --target lint --build-context component=$(COMPONENT)
+	docker build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
 	rm -rf $(COMPONENT)/.golangci.yaml
 else
-	docker build . -f Dockerfile --target lint --build-context component=$(COMPONENT)
+	docker build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
 endif
 
 .PHONY: fmt
@@ -148,7 +147,7 @@ vet:
 .PHONY: test
 # Run tests
 test: fmt vet
-	docker build . -f Dockerfile --target test --build-context component=$(COMPONENT)
+	docker build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
