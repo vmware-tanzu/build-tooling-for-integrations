@@ -1,7 +1,7 @@
 # Copyright 2023 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-ARG BUILDER_BASE_IMAGE=golang:1.17
+ARG BUILDER_BASE_IMAGE=golang:1.18
 
 FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE as base
 ARG COMPONENT

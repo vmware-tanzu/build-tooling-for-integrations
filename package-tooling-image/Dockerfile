@@ -1,11 +1,10 @@
-FROM bitnami/golang:1.17
+FROM golang:1.18
 
 LABEL org.opencontainers.image.source=https://github.com/vmware-tanzu/build-tooling-for-integrations
 
 ENV DOCKER_CE_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV DOCKER_CE_CLI_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV CONTAINERD_VERSION 1.5.11-1
-ENV GOVERSION 1.17.7
 ENV PACKAGE_TOOLS_VERSION v0.0.1
 
 RUN apt-get update && \
