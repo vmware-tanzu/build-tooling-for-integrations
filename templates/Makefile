@@ -139,21 +139,22 @@ vet:
 # Run tests
 test: fmt vet
 	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
+	@$(DOCKER) build . -f Dockerfile --target unit-test-coverage --build-arg COMPONENT=$(COMPONENT) --output build/$(COMPONENT)/coverage
 
 .PHONY: docker-build
 # Build docker image
 docker-build:
-	$(DOCKER) build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
+	$(DOCKER) build -t $(IMAGE) -f Dockerfile --target image --platform linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
 
 .PHONY: docker-publish
 # Publish docker image
 docker-publish:
 	$(DOCKER) push $(IMAGE)
 
-.PHONY: generate-binary
-# Generate binary
-generate-binary:
-	$(DOCKER) build -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output bin/$(COMPONENT) --platform ${PLATFORM} --build-context component=$(COMPONENT) .
+.PHONY: binary-build
+# Build the binary
+binary-build:
+	$(DOCKER) build -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) .
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
