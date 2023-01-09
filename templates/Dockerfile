@@ -25,7 +25,7 @@ FROM base AS test
 RUN --mount=target=. \
     --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    cd $COMPONENT && go test ./...
+    cd $COMPONENT && mkdir /out && go test -v -coverprofile=/out/cover.out ./...
 
 # Build the manager binary
 FROM base as builder
@@ -39,7 +39,7 @@ RUN --mount=target=. \
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:nonroot as image
 WORKDIR /
 COPY --from=builder /out/manager .
 USER nonroot:nonroot
@@ -47,7 +47,7 @@ USER nonroot:nonroot
 ENTRYPOINT ["/manager"]
 
 FROM scratch AS unit-test-coverage
-COPY --from=unit-test /out/cover.out /cover.out
+COPY --from=test /out/cover.out /cover.out
 
 FROM scratch AS bin-unix
 COPY --from=builder /out/manager /
