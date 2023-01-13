@@ -64,8 +64,8 @@ install-package-container:
 .PHONY: init
 # Fetch the Dockerfile and pull image needed to build packages
 init:
-	docker run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
-	docker pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
+	$(DOCKER) run --rm -v ${PWD}:/workspace --entrypoint /bin/sh $(BUILD_TOOLING_CONTAINER_IMAGE):$(VERSION) -c "cp Dockerfile /workspace && cp .golangci.yaml /workspace"
+	$(DOCKER) pull $(PACKAGING_CONTAINER_IMAGE):$(VERSION)
 
 ##
 ## Other Targets
@@ -89,8 +89,8 @@ $(COMPONENTS):
 ifneq ($(strip $(OCI_REGISTRY)),)
 	$(eval IMAGE = $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 endif
-	make validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
-	make component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
+	$(MAKE) validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
+	$(MAKE) component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
 
 .PHONY: evaluate-component
 validate-component:
@@ -107,31 +107,31 @@ ifeq ($(COMPONENT_PATH),)
 else
 	$(eval COMPONENT = $(COMPONENT_PATH))
 endif
-	make COMPONENT=$(COMPONENT) lint
-	make COMPONENT=$(COMPONENT) test
-	make IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
-	make IMAGE=$(IMAGE) docker-publish
-	make KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
+	$(MAKE) COMPONENT=$(COMPONENT) lint
+	$(MAKE) COMPONENT=$(COMPONENT) test
+	$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
+	$(MAKE) IMAGE=$(IMAGE) docker-publish
+	$(MAKE) KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
 
 .PHONY: docker-build
 # Build docker image
 docker-build:
-	docker build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
+	$(DOCKER) build -t $(IMAGE) -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
 
 .PHONY: docker-publish
 # Publish docker image
 docker-publish:
-	docker push $(IMAGE)
+	$(DOCKER) push $(IMAGE)
 
 .PHONY: lint
 # Run linting
 lint:
 ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
-	docker build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
 	rm -rf $(COMPONENT)/.golangci.yaml
 else
-	docker build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
 endif
 
 .PHONY: fmt
@@ -147,12 +147,12 @@ vet:
 .PHONY: test
 # Run tests
 test: fmt vet
-	docker build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
 kbld-image-replace:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=kbld_replace \
 	  -e KBLD_CONFIG_FILE_PATH=$(KBLD_CONFIG_FILE_PATH) \
 	  -e DEFAULT_IMAGE=$(DEFAULT_IMAGE) \
@@ -165,7 +165,7 @@ kbld-image-replace:
 .PHONY: package-bundle-generate
 # Generate package bundle for a particular package
 package-bundle-generate:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=package_bundle_generate \
 	  -e PACKAGE_NAME=$(PACKAGE_NAME) \
 	  -e THICK=true \
@@ -179,7 +179,7 @@ package-bundle-generate:
 .PHONY: package-bundle-generate-all
 # Generate package bundle for all packages
 package-bundle-generate-all:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=package_bundle_all_generate \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
 	  -e THICK=true \
@@ -193,7 +193,7 @@ package-bundle-generate-all:
 .PHONY: package-bundle-push
 # Push a particular package bundle
 package-bundle-push:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=package_bundle_push \
 	  -e PACKAGE_NAME=$(PACKAGE_NAME) \
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
@@ -209,7 +209,7 @@ package-bundle-push:
 .PHONY: package-bundle-push-all
 # Push all package bundles
 package-bundle-push-all:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=package_bundle_all_push \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
@@ -225,7 +225,7 @@ package-bundle-push-all:
 .PHONY: repo-bundle-generate
 # Generate repo bundle
 repo-bundle-generate:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=repo_bundle_generate \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
@@ -239,7 +239,7 @@ repo-bundle-generate:
 .PHONY: repo-bundle-push
 # Push repo bundle
 repo-bundle-push:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=repo_bundle_push \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
@@ -255,7 +255,7 @@ repo-bundle-push:
 .PHONY: package-vendir-sync
 # Performs vendir sync on each package
 package-vendir-sync:
-	@docker run \
+	@$(DOCKER) run \
 	  -e OPERATIONS=vendir_sync \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
@@ -264,4 +264,4 @@ package-vendir-sync:
 .PHONY: help
 # Show help
 help:
-	@cat $(MAKEFILE_LIST) | docker run --rm -i xanders/make-help
+	@cat $(MAKEFILE_LIST) | $(DOCKER) run --rm -i xanders/make-help
