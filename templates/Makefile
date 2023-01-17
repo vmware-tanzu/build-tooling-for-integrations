@@ -74,11 +74,20 @@ init:
 
 .PHONY: all
 # Run linter, tests, build and publish images and packages
-all: docker-all package-vendir-sync package-bundle-generate-all package-bundle-push-all
+all: docker-all package-all
 
 .PHONY: docker-all
 # Run linter, tests, build and publish images
 docker-all: $(COMPONENTS)
+
+.PHONY: build-all
+# Run linter, tests and build binaries
+build-all: BUILD_BIN:=true
+build-all: $(COMPONENTS)
+
+.PHONY: package-all
+# Generate package bundles and push them to a registry
+package-all: package-bundle-generate-all package-bundle-push-all
 
 .PHONY: $(COMPONENTS)
 $(COMPONENTS):
@@ -91,7 +100,7 @@ ifneq ($(strip $(OCI_REGISTRY)),)
 	$(eval IMAGE = $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 endif
 	$(MAKE) validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
-	$(MAKE) component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH)
+	$(MAKE) component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=${BUILD_BIN}
 
 .PHONY: validate-component
 validate-component:
@@ -110,9 +119,13 @@ else
 endif
 	$(MAKE) COMPONENT=$(COMPONENT) lint
 	$(MAKE) COMPONENT=$(COMPONENT) test
+ifeq ($(BUILD_BIN), true)
+	$(MAKE) COMPONENT=$(COMPONENT) binary-build
+else
 	$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
 	$(MAKE) IMAGE=$(IMAGE) docker-publish
 	$(MAKE) KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
+endif
 
 .PHONY: lint
 # Run linting
