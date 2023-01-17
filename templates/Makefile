@@ -141,12 +141,12 @@ endif
 .PHONY: fmt
 # Run go fmt against code
 fmt:
-	cd $(COMPONENT) && go fmt ./...
+	$(DOCKER) build . -f Dockerfile --target fmt --build-arg COMPONENT=$(COMPONENT)
 
 .PHONY: vet
 # Perform static analysis of code
 vet:
-	cd $(COMPONENT) && go vet ./...
+	$(DOCKER) build . -f Dockerfile --target vet --build-arg COMPONENT=$(COMPONENT)
 
 .PHONY: test
 # Run tests

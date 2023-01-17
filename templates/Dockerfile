@@ -20,6 +20,18 @@ RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/golangci-lint \
     cd $COMPONENT && golangci-lint run --config /workspace/.golangci.yaml --timeout 10m0s ./...
 
+FROM base AS fmt
+RUN --mount=target=. \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    cd $COMPONENT && go fmt ./...
+
+FROM base AS vet
+RUN --mount=target=. \
+    --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    cd $COMPONENT && go vet ./...
+
 # Testing
 FROM base AS test
 RUN --mount=target=. \
