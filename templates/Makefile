@@ -12,7 +12,7 @@ IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
 GOPROXY ?= "https://proxy.golang.org,direct"
 PLATFORM=local
-COMPONENTS ?= ""."".""
+COMPONENTS ?=
 
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
@@ -73,13 +73,14 @@ init:
 ## Other Targets
 ##
 
-.PHONY: all
-# Run linter, tests, build and publish images and packages
-all: docker-all package-all
+.PHONY: docker-build-all
+# Run linter, tests and build images
+docker-build-all: $(COMPONENTS)
 
-.PHONY: docker-all
-# Run linter, tests, build and publish images
-docker-all: $(COMPONENTS)
+.PHONY: docker-publish-all
+# Push images of all components
+docker-publish-all: PUBLISH_IMAGES:=true
+docker-publish-all: $(COMPONENTS)
 
 .PHONY: build-all
 # Run linter, tests and build binaries
@@ -97,11 +98,13 @@ $(COMPONENTS):
 	$(eval PACKAGE_PATH = $(word 3,$(subst ., ,$@)))
 	$(eval IMAGE = $(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 	$(eval DEFAULT_IMAGE = $(IMAGE_NAME):$(IMG_DEFAULT_TAG))
-ifneq ($(strip $(OCI_REGISTRY)),)
-	$(eval IMAGE = $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
-endif
-	$(MAKE) validate-component COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
-	$(MAKE) component-all COMPONENT_PATH=$(COMPONENT_PATH) DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=${BUILD_BIN}
+	$(eval IMAGE = $(shell if [ ! -z "$(OCI_REGISTRY)" ]; then echo $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE); else echo $(IMAGE); fi))
+	@if [ "$(PUBLISH_IMAGES)" == "true" ]; then \
+		$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH) || exit 1; \
+		$(MAKE) publish-$@ IMAGE=$(IMAGE) DEFAULT_IMAGE=$(DEFAULT_IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+	else \
+		$(MAKE) build-$@ COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+	fi
 
 .PHONY: validate-component
 validate-component:
@@ -111,8 +114,8 @@ else ifeq ($(strip $(PACKAGE_PATH)),)
 	$(error Path to the package of the component is not set in COMPONENTS variable, check https://github.com/vmware-tanzu/build-tooling-for-integrations/blob/main/docs/build-tooling-getting-started.md#steps-to-use-the-build-tooling for more help)
 endif
 
-.PHONY: component-all
-component-all:
+.PHONY: build-%
+build-%:
 ifeq ($(COMPONENT_PATH),)
 	$(eval COMPONENT = .)
 else
@@ -123,10 +126,14 @@ endif
 ifeq ($(BUILD_BIN), true)
 	$(MAKE) COMPONENT=$(COMPONENT) binary-build
 else
+	$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
 	$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
+endif
+
+.PHONY: publish-%
+publish-%:
 	$(MAKE) IMAGE=$(IMAGE) docker-publish
 	$(MAKE) KBLD_CONFIG_FILE_PATH=packages/$(PACKAGE_PATH)/kbld-config.yaml DEFAULT_IMAGE=$(DEFAULT_IMAGE) IMAGE=$(IMAGE) kbld-image-replace
-endif
 
 .PHONY: lint
 # Run linting
@@ -155,6 +162,11 @@ test: fmt vet
 	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 	@$(DOCKER) build . -f Dockerfile --target unit-test-coverage --build-arg COMPONENT=$(COMPONENT) --output build/$(COMPONENT)/coverage
 
+.PHONY: binary-build
+# Build the binary
+binary-build:
+	$(DOCKER) build . -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+
 .PHONY: docker-build
 # Build docker image
 docker-build:
@@ -164,11 +176,6 @@ docker-build:
 # Publish docker image
 docker-publish:
 	$(DOCKER) push $(IMAGE)
-
-.PHONY: binary-build
-# Build the binary
-binary-build:
-	$(DOCKER) build . -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
