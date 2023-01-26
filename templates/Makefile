@@ -10,6 +10,7 @@ MAKE := make
 
 IMG_DEFAULT_TAG := latest
 IMG_VERSION_OVERRIDE ?= $(IMG_DEFAULT_TAG)
+GOPROXY ?= "https://proxy.golang.org,direct"
 PLATFORM=local
 COMPONENTS ?= ""."".""
 
@@ -132,32 +133,32 @@ endif
 lint:
 ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
-	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 	rm -rf $(COMPONENT)/.golangci.yaml
 else
-	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 endif
 
 .PHONY: fmt
 # Run go fmt against code
 fmt:
-	$(DOCKER) build . -f Dockerfile --target fmt --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target fmt --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: vet
 # Perform static analysis of code
 vet:
-	$(DOCKER) build . -f Dockerfile --target vet --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target vet --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: test
 # Run tests
 test: fmt vet
-	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT)
+	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 	@$(DOCKER) build . -f Dockerfile --target unit-test-coverage --build-arg COMPONENT=$(COMPONENT) --output build/$(COMPONENT)/coverage
 
 .PHONY: docker-build
 # Build docker image
 docker-build:
-	$(DOCKER) build -t $(IMAGE) -f Dockerfile --target image --platform linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) .
+	$(DOCKER) build . -t $(IMAGE) -f Dockerfile --target image --platform linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: docker-publish
 # Publish docker image
@@ -167,7 +168,7 @@ docker-publish:
 .PHONY: binary-build
 # Build the binary
 binary-build:
-	$(DOCKER) build -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) .
+	$(DOCKER) build . -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
