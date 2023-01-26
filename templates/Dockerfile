@@ -1,10 +1,12 @@
-# Copyright 2021 VMware, Inc. All Rights Reserved.
+# Copyright 2023 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 ARG BUILDER_BASE_IMAGE=golang:1.17
 
 FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE as base
 ARG COMPONENT
+ARG GOPROXY_ARG
+ENV GOPROXY=${GOPROXY_ARG}
 WORKDIR /workspace
 COPY "$COMPONENT"/go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
