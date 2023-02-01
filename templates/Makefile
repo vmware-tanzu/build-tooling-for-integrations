@@ -18,6 +18,10 @@ BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.1
 
+# utility functions to check for main.go in component path
+find_main_go = $(shell find $(1) -name main.go)
+check_main_go = $(if $(call find_main_go,$(1)),Found,NotFound)
+
 ##
 ## Project Initialization Targets
 ##
@@ -123,12 +127,14 @@ else
 endif
 	$(MAKE) COMPONENT=$(COMPONENT) lint
 	$(MAKE) COMPONENT=$(COMPONENT) test
-ifeq ($(BUILD_BIN), true)
-	$(MAKE) COMPONENT=$(COMPONENT) binary-build
-else
-	$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH)
-	$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build
-endif
+	@if [ "$(call check_main_go,$(COMPONENT))" == "Found" ]; then \
+		if [ "$(BUILD_BIN)" == "true" ]; then \
+			$(MAKE) COMPONENT=$(COMPONENT) binary-build; \
+		else \
+			$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH) || exit 1; \
+			$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build; \
+		fi \
+	fi
 
 .PHONY: publish-%
 publish-%:
