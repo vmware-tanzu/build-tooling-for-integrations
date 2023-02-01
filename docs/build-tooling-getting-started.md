@@ -20,23 +20,34 @@ some seed projects.
 2. Set COMPONENTS variable
 
    For the build tooling to understand where your components are located, it needs the `COMPONENTS` variable to be set.
-   You can set the `COMPONENTS` variable either in the makefile or as an environment variable. We need to provide the
-   component's location, default image name and the package name of the component delimited by a `.` something like
-   below:
+   You can set the `COMPONENTS` variable either in the makefile or as an environment variable.
+   
+   Build tooling supports building client library components and components that can generate binaries. Build tooling
+   identifies if a component is a library or not by looking for `main.go` in the component's directory and 
+   sub-directories.
+
+
+   To build client library set the path of the client library component in the `COMPONENTS` variable, like below
+   ```
+   COMPONENTS ?= client-library-module
+   ```
+   
+   To build a component that can generate a binary, we need to provide the component's location, default image name and 
+   the package name of the component delimited by a `.` something like below:
 
    ```
-   COMPONENTS ?= featuregates.featuregates-controller-manager.featuregates
+   COMPONENTS ?= module1.module1-manager.module1
    ```
+   
+   Here `module1` is the path to the module1 component from project's root directory, `module1-manager`
+   is the default image name, `module1` is the name of the package, this should be same as the directory name that
+   holds the package definition of module1 in `packages` directory that's in the project's root directory.
 
-   Here `featuregates` is the path to the featuregates component from project's root directory, `featuregates-controller-manager`
-   is the default image name, `featuregates` is the name of the package, this should be same as the directory name that
-   holds the package definition of featuregates in `packages` directory that's in the project's root directory.
-
-   If your project has multiple go modules and you want to build images and packages for each of the go module, you can
-   do that by setting multiple components to the COMPONENTS variable. For example:
+   If your integration has multiple go modules, and you want to build each of the go module, you can set multiple components
+   in the COMPONENTS variable. For example:
 
    ```
-   COMPONENTS ?= featuregates.featuregates-controller-manager.featuregates capabilities.capabilities-controller-manager.capabilities
+   COMPONENTS ?= module1.module1-manager.module1 client-library-module
    ```
 
 3. Run make init
@@ -49,30 +60,49 @@ some seed projects.
    make init
    ```
 
-4. Create packages directory and add package definition in it
+4. [Optional] For components that can generate binaries, create packages directory and add package definition in it
    
    If you are using one of the seed projects, you need to customize the existing package in that project, else check 
    this [documentation](./add-package.md) on how to add a package
 
-5. Build the images in the integration
+5. Build the components in the integration
 
-   To build the images in the integration, run
+
+   To build the components and to generate the binaries of the components, run:
 
    ```
-   make docker-all
+   make build-all
+   ```
+
+   Running the above make target generates the binaries of the components and puts them in `build/{component}` directory
+   in the integration's root directory.
+
+   To build the images of the components in your integration, run:
+
+   ```
+   make docker-build-all
    ```
    
-   Following env vars should be set when running the above make target
+   Following env vars should be set when running the above make target if your `COMPONENTS` variable includes components
+   that are executable
 
    1. `OCI_REGISTRY` - remote OCI registry where you would like to push the built image.
    2. `IMG_VERSION_OVERRIDE` - image tag for the image to be built.
    
-6. Build the images, package bundles and publish them
+6. [Optional] Publish the images
    
-   To build and publish the images and package bundles in the integration, run
+   To publish the images built in the previous step, run
 
    ```
-   make all
+      make docker-publish-all
+   ```
+
+7. [Optional] Build and publish package bundles 
+
+   To build and publish the package bundles in the integration, run
+
+   ```
+   make package-all
    ```
 
    Following env vars should be set when running the above make target
