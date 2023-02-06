@@ -16,7 +16,7 @@ COMPONENTS ?=
 
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
-VERSION ?= v0.0.1
+VERSION ?= vv0.0.2
 
 # utility functions to check for main.go in component path
 find_main_go = $(shell find $(1) -name main.go)
