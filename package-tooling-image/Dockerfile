@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.source=https://github.com/vmware-tanzu/build-tool
 ENV DOCKER_CE_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV DOCKER_CE_CLI_VERSION 5:20.10.14~3-0~debian-bullseye
 ENV CONTAINERD_VERSION 1.5.11-1
-ENV PACKAGE_TOOLS_VERSION v0.0.1
+ENV PACKAGE_TOOLS_VERSION v0.0.2
 
 RUN apt-get update && \
     apt-get install -y make gnupg lsb-release
