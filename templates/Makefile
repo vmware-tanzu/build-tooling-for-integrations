@@ -5,7 +5,7 @@ REGISTRY_ENDPOINT := localhost:$(REGISTRY_PORT)
 PACKAGE_PREFIX := $(REGISTRY_ENDPOINT)
 REGISTRY_NAME := tanzu-integration-registry
 
-DOCKER := docker
+DOCKER := DOCKER_BUILDKIT=1 docker
 MAKE := make
 
 IMG_DEFAULT_TAG := latest
@@ -103,11 +103,14 @@ $(COMPONENTS):
 	$(eval IMAGE = $(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
 	$(eval DEFAULT_IMAGE = $(IMAGE_NAME):$(IMG_DEFAULT_TAG))
 	$(eval IMAGE = $(shell if [ ! -z "$(OCI_REGISTRY)" ]; then echo $(OCI_REGISTRY)/$(IMAGE_NAME):$(IMG_VERSION_OVERRIDE); else echo $(IMAGE); fi))
-	@if [ "$(PUBLISH_IMAGES)" == "true" ]; then \
-		$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH) || exit 1; \
-		$(MAKE) publish-$@ IMAGE=$(IMAGE) DEFAULT_IMAGE=$(DEFAULT_IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+	$(eval COMPONENT = $(shell if [ -z "$(COMPONENT_PATH)" ]; then echo "."; else echo $(COMPONENT_PATH); fi))
+	@if [ "$(PUBLISH_IMAGES)" = "true" ]; then \
+		if [ "$(call check_main_go,$(COMPONENT))" = "Found" ]; then \
+			$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH) || exit 1; \
+			$(MAKE) publish-$@ IMAGE=$(IMAGE) DEFAULT_IMAGE=$(DEFAULT_IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+		fi \
 	else \
-		$(MAKE) build-$@ COMPONENT_PATH=$(COMPONENT_PATH) IMAGE_NAME=$(IMAGE_NAME) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+		$(MAKE) build-$@ COMPONENT=$(COMPONENT) IMAGE_NAME=$(IMAGE_NAME) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
 	fi
 
 .PHONY: validate-component
@@ -120,19 +123,14 @@ endif
 
 .PHONY: build-%
 build-%:
-ifeq ($(COMPONENT_PATH),)
-	$(eval COMPONENT = .)
-else
-	$(eval COMPONENT = $(COMPONENT_PATH))
-endif
 	$(MAKE) COMPONENT=$(COMPONENT) lint
 	$(MAKE) COMPONENT=$(COMPONENT) test
-	@if [ "$(call check_main_go,$(COMPONENT))" == "Found" ]; then \
-		if [ "$(BUILD_BIN)" == "true" ]; then \
+	@if [ "$(call check_main_go,$(COMPONENT))" = "Found" ]; then \
+		if [ "$(BUILD_BIN)" = "true" ]; then \
 			$(MAKE) COMPONENT=$(COMPONENT) binary-build; \
 		else \
 			$(MAKE) validate-component IMAGE_NAME=$(IMAGE_NAME) PACKAGE_PATH=$(PACKAGE_PATH) || exit 1; \
-			$(MAKE) IMAGE=$(IMAGE) COMPONENT=$(COMPONENT) docker-build; \
+			$(MAKE) docker-build IMAGE=$(IMAGE) COMPONENT=$(COMPONENT); \
 		fi \
 	fi
 
