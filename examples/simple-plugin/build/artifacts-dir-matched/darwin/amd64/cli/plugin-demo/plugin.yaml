@@ -1,0 +1,13 @@
+name: plugin-demo
+description: a simple plugin example.
+version: v0.0.1
+buildSHA: ""
+digest: ""
+group: Manage
+docURL: ""
+completionType: 0
+installationpath: ""
+discovery: ""
+scope: ""
+status: ""
+discoveredrecommendedversion: ""

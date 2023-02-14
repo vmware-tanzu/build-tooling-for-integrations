@@ -181,6 +181,20 @@ docker-build:
 docker-publish:
 	$(DOCKER) push $(IMAGE)
 
+# Tanzu CLI Plugin Builder is used to compile and publish Tanzu CLI plugins.
+# https://github.com/vmware-tanzu/tanzu-cli/tree/main/cmd/plugin/builder
+.PHONY: plugin-builder-install
+plugin-builder-install:
+	docker build . -f Dockerfile --target plugin-builder
+
+.PHONY: plugin-compile
+plugin-compile: plugin-builder-install
+	docker build . -f Dockerfile --target plugin-compile --output build --build-arg VERSION=$(PACKAGE_VERSION)
+
+.PHONY: plugin-publish
+plugin-publish: plugin-builder-install
+	docker build . -f Dockerfile --target plugin-publish --build-arg VERSION=$(PACKAGE_VERSION) --build-arg INPUT_ARTIFACT_DIR="build/artifacts-dir-matched" --build-arg PLUGINS="plugin-demo" --build-arg TYPE=oci --build-arg OCI_DISCOVERY_IMAGE=$(OCI_REGISTRY)/plugin-demo --build-arg OCI_DISTRIBUTION_IMAGE_REPOSITORY=$(OCI_REGISTRY) --build-arg IMGPKG_USERNAME=codegold79 --build-arg IMGPKG_PASSWORD=change-this-to-a-working-password
+
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
 kbld-image-replace:
