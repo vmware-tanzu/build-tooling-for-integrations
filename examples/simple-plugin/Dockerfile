@@ -75,14 +75,15 @@ RUN --mount=type=bind,readwrite tanzu-builder cli compile --version "${VERSION}"
 FROM plugin-builder AS plugin-publish
 ARG VERSION
 ARG INPUT_ARTIFACT_DIR
-ARG PLUGINS
 ARG TYPE
 ARG OCI_DISCOVERY_IMAGE
 ARG OCI_DISTRIBUTION_IMAGE_REPOSITORY
 ARG IMGPKG_USERNAME
 ARG IMGPKG_PASSWORD
 ENV IMGPKG_USERNAME=${IMGPKG_USERNAME} IMGPKG_PASSWORD=${IMGPKG_PASSWORD}
-RUN --mount=type=bind,readwrite tanzu-builder publish --version "${VERSION}" --input-artifact-dir "${INPUT_ARTIFACT_DIR}" --plugins "${PLUGINS}" --type "${TYPE}" --oci-discovery-image "${OCI_DISCOVERY_IMAGE}" --oci-distribution-image-repository "${OCI_DISTRIBUTION_IMAGE_REPOSITORY}"
+RUN --mount=type=bind,readwrite PLUGINS=$(find cmd/cli/plugin -type d -maxdepth 1 -mindepth 1 -printf "%f ") && \
+    PLUGINS=$(printf "${PLUGINS}" | sed 's/ *$//g') && \
+    tanzu-builder publish --version "${VERSION}" --input-artifact-dir "${INPUT_ARTIFACT_DIR}" --plugins "${PLUGINS}" --type "${TYPE}" --oci-discovery-image "${OCI_DISCOVERY_IMAGE}" --oci-distribution-image-repository "${OCI_DISTRIBUTION_IMAGE_REPOSITORY}"
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
