@@ -193,7 +193,18 @@ plugin-compile: plugin-builder-install
 
 .PHONY: plugin-publish
 plugin-publish: plugin-builder-install
-	docker build . -f Dockerfile --target plugin-publish --build-arg VERSION=$(PACKAGE_VERSION) --build-arg INPUT_ARTIFACT_DIR="build/artifacts-dir-matched" --build-arg PLUGINS="plugin-demo" --build-arg TYPE=oci --build-arg OCI_DISCOVERY_IMAGE=$(OCI_REGISTRY)/plugin-demo --build-arg OCI_DISTRIBUTION_IMAGE_REPOSITORY=$(OCI_REGISTRY) --build-arg IMGPKG_USERNAME=$(REGISTRY_USERNAME) --build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD)
+	IMGPKG_VERSION=$(shell awk 'BEGIN{ RS="- " }{ if( $$2=="imgpkg" ){ print $$4 } }' ../../package-tools/cmd/config/carvel-tools-config.yaml) && \
+	docker build . -f Dockerfile \
+	--target plugin-publish \
+	--build-arg VERSION=$(PACKAGE_VERSION) \
+	--build-arg INPUT_ARTIFACT_DIR="build/artifacts-dir-matched" \
+	--build-arg PLUGINS="plugin-demo" \
+	--build-arg TYPE=oci \
+	--build-arg OCI_DISCOVERY_IMAGE=$(OCI_REGISTRY)/plugin-demo \
+	--build-arg OCI_DISTRIBUTION_IMAGE_REPOSITORY=$(OCI_REGISTRY) \
+	--build-arg IMGPKG_USERNAME=$(REGISTRY_USERNAME) \
+	--build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD) \
+	--build-arg IMGPKG_VERSION=$$IMGPKG_VERSION
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml

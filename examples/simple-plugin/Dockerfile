@@ -1,16 +1,19 @@
 # Copyright 2023 VMware, Inc. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-ARG BUILDER_BASE_IMAGE=golang:1.20
+ARG BUILDER_BASE_IMAGE=golang:1.18
 
 FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE as base
 ARG COMPONENT
+ARG IMGPKG_VERSION
 WORKDIR /workspace
 COPY "$COMPONENT"/go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
-# Install Carvel tools. The imgpkg tool is required for plugin builder publish.
-RUN curl -L https://carvel.dev/install.sh | K14SIO_INSTALL_BIN_DIR=/bin bash && imgpkg version
+# The imgpkg tool is required for plugin builder publish.
+RUN if [ -n "${IMGPKG_VERSION}" ]; \
+    then wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-amd64 && \
+    chmod +x /bin/imgpkg;fi
 
 # Linting
 FROM golangci/golangci-lint:latest AS lint-base
