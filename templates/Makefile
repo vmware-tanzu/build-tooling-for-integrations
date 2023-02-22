@@ -198,7 +198,6 @@ plugin-publish: plugin-builder-install
 	--target plugin-publish \
 	--build-arg VERSION=$(PACKAGE_VERSION) \
 	--build-arg INPUT_ARTIFACT_DIR="build/artifacts-dir-matched" \
-	--build-arg PLUGINS="plugin-demo" \
 	--build-arg TYPE=oci \
 	--build-arg OCI_DISCOVERY_IMAGE=$(OCI_REGISTRY)/plugin-demo \
 	--build-arg OCI_DISTRIBUTION_IMAGE_REPOSITORY=$(OCI_REGISTRY) \
