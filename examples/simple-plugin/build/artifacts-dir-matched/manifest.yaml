@@ -1,7 +1,0 @@
-created: 2023-02-07T15:49:37.419816-08:00
-plugins:
-- name: plugin-demo
-  description: a simple plugin example.
-  versions: []
-version: ""
-coreVersion: v0.0.2
