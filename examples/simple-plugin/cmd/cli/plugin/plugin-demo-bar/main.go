@@ -10,7 +10,7 @@ import (
 )
 
 var descriptor = cliv1alpha1.PluginDescriptor{
-	Name:        "plugin-demo",
+	Name:        "plugin-demo-bar",
 	Description: "a simple plugin example.",
 	Version:     "v0.0.1",
 	Group:       cliv1alpha1.ManageCmdGroup, // set group
