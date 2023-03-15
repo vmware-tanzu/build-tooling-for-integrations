@@ -18,6 +18,8 @@ BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.2
 
+IMGPKG_VERSION ?= $(shell awk 'BEGIN{ RS="- " }{ if( $$2=="imgpkg" ){ print $$4 } }' ../../package-tools/cmd/config/carvel-tools-config.yaml)
+
 # utility functions to check for main.go in component path
 find_main_go = $(shell find $(1) -name main.go)
 check_main_go = $(if $(call find_main_go,$(1)),Found,NotFound)
@@ -183,27 +185,29 @@ docker-publish:
 
 # Tanzu CLI Plugin Builder is used to compile and publish Tanzu CLI plugins.
 # https://github.com/vmware-tanzu/tanzu-cli/tree/main/cmd/plugin/builder
-.PHONY: plugin-builder-install
+.PHONY: cli-plugin-builder-install
 plugin-builder-install:
-	docker build . -f Dockerfile --target plugin-builder
+	docker build . -f Dockerfile --target cli-plugin-builder-install
 
-.PHONY: plugin-compile
-plugin-compile: plugin-builder-install
-	docker build . -f Dockerfile --target plugin-compile --output build --build-arg VERSION=$(PACKAGE_VERSION)
-
-.PHONY: plugin-publish
-plugin-publish: plugin-builder-install
-	IMGPKG_VERSION=$(shell awk 'BEGIN{ RS="- " }{ if( $$2=="imgpkg" ){ print $$4 } }' ../../package-tools/cmd/config/carvel-tools-config.yaml) && \
-	docker build . -f Dockerfile \
-	--target plugin-publish \
+.PHONY: cli-plugin-build
+cli-plugin-build: install-registry cli-plugin-builder-install
+	docker build --network=host . -f Dockerfile \
+	--target cli-plugin-build \
+	--output build \
+	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
 	--build-arg VERSION=$(PACKAGE_VERSION) \
-	--build-arg INPUT_ARTIFACT_DIR="build/artifacts-dir-matched" \
-	--build-arg TYPE=oci \
-	--build-arg OCI_DISCOVERY_IMAGE=$(OCI_REGISTRY)/plugin-demo \
-	--build-arg OCI_DISTRIBUTION_IMAGE_REPOSITORY=$(OCI_REGISTRY) \
+	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT)
+
+.PHONY: cli-plugin-publish
+cli-plugin-publish: plugin-builder-install
+	docker build . -f Dockerfile \
+	--target cli-plugin-publish \
+	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
+	--build-arg REPOSITORY=$(OCI_REGISTRY) \
 	--build-arg IMGPKG_USERNAME=$(REGISTRY_USERNAME) \
 	--build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD) \
-	--build-arg IMGPKG_VERSION=$$IMGPKG_VERSION
+	--build-arg PUBLISHER=$(PUBLISHER) \
+	--build-arg VENDOR=$(VENDOR)
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml

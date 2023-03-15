@@ -12,7 +12,7 @@ WORKDIR /workspace
 COPY "$COMPONENT"/go.* ./
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
-# The imgpkg tool is required for plugin builder publish.
+# The imgpkg tool is required for Tanzu CLI Plugin Builder.
 RUN if [ -n "${IMGPKG_VERSION}" ]; \
     then wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-amd64 && \
     chmod +x /bin/imgpkg;fi
@@ -56,46 +56,49 @@ RUN --mount=target=. \
     --mount=type=cache,target=/go/pkg/mod \
     cd $COMPONENT && CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -o /out/manager ./main.go
 
-# Download, extract, and install Tanzu CLI Admin Plugin Builder
-FROM base AS plugin-builder
+# Download, extract, and install Tanzu CLI Plugin Builder
+# Note: Until the first version of Tanzu CLI is released, we will be cloning
+# the vmware-tanzu/tanzu-cli repo and building the plugin builder here.
+# When the first release is available, we'll get the plugin builder tool
+# from their central repository.
+FROM base AS cli-plugin-builder-install
 ARG PLUGINS_ADMIN="tanzu-framework-plugins-admin-linux-amd64"
 ARG URL="https://github.com/vmware-tanzu/tanzu-framework/releases/latest/download/${PLUGINS_ADMIN}.tar.gz"
-RUN mkdir tmp && \
-    cd tmp && \
-    wget ${URL} && \
-    tar -xzf ${PLUGINS_ADMIN}.tar.gz --wildcards --no-anchored "builder/*/tanzu-builder-linux_amd64" && \
-    rm  ${PLUGINS_ADMIN}.tar.gz && \
-    builder=$(find admin-plugins/distribution/linux/amd64/cli/builder/ -name tanzu-builder-* -type f) && \
-    mv ${builder} /bin/tanzu-builder && \
-    cd /workspace && rm -r tmp
+RUN mkdir tmp-src && \
+    cd tmp-src && \
+    git clone https://github.com/vmware-tanzu/tanzu-cli.git && \
+    cd tanzu-cli/cmd/plugin/builder && \
+    go build -o tanzu-builder . && \
+    mv tanzu-builder /bin/tanzu-builder && \
+    cd /workspace && rm -r tmp-src
 
 # Run Tanzu plugin builder and compile all plugins in the project's cmd/cli/plugin directory.
-FROM plugin-builder AS plugin-compile-prep
+FROM cli-plugin-builder-install AS cli-plugin-build-prep
 ARG VERSION
-RUN --mount=type=bind,readwrite tanzu-builder cli compile --version "${VERSION}" && \
+ARG OCI_REGISTRY
+RUN --mount=type=bind,readwrite \
+    tanzu-builder plugin build \
+        --version "${VERSION}" \
+        --binary-artifacts "./artifacts/plugins" && \
+    tanzu-builder plugin build-package \
+        --oci-registry "${OCI_REGISTRY}" && \
     mkdir -p /out/plugin-artifacts && \
     cp -r artifacts /out/plugin-artifacts
 
 # Run Tanzu plugin builder and publish all plugins in the project's cmd/cli/plugin directory.
-FROM plugin-builder AS plugin-publish
-ARG VERSION
-ARG INPUT_ARTIFACT_DIR
-ARG TYPE
-ARG OCI_DISCOVERY_IMAGE
-ARG OCI_DISTRIBUTION_IMAGE_REPOSITORY
+FROM cli-plugin-builder-install AS cli-plugin-publish
+ARG REPOSITORY
+ARG PUBLISHER
+ARG VENDOR
 ARG IMGPKG_USERNAME
 ARG IMGPKG_PASSWORD
 ENV IMGPKG_USERNAME=${IMGPKG_USERNAME} IMGPKG_PASSWORD=${IMGPKG_PASSWORD}
 RUN --mount=type=bind,readwrite \
-    PLUGINS=$(find cmd/cli/plugin -type d -maxdepth 1 -mindepth 1 -printf "%f ") && \
-    PLUGINS=$(printf "${PLUGINS}" | sed 's/ *$//g') && \
-    tanzu-builder publish \
-        --version "${VERSION}" \
-        --input-artifact-dir "${INPUT_ARTIFACT_DIR}" \
-        --plugins "${PLUGINS}" \
-        --type "${TYPE}" \
-        --oci-discovery-image "${OCI_DISCOVERY_IMAGE}" \
-        --oci-distribution-image-repository "${OCI_DISTRIBUTION_IMAGE_REPOSITORY}"
+    tanzu-builder plugin publish-package \
+        --repository "${REPOSITORY}" \
+        --publisher "${PUBLISHER}" \
+        --vendor "${VENDOR}" \
+        --package-artifacts "./build/artifacts/packages"
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -120,5 +123,5 @@ COPY --from=builder /out/manager /manager.exe
 
 FROM bin-${TARGETOS} as bin
 
-FROM scratch as plugin-compile
-COPY --from=plugin-compile-prep /out/plugin-artifacts/ .
+FROM scratch as cli-plugin-build
+COPY --from=cli-plugin-build-prep /out/plugin-artifacts/ .

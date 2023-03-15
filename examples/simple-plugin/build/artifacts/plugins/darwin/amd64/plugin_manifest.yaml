@@ -1,0 +1,12 @@
+created: 2023-03-15T15:30:30.3106072Z
+plugins:
+    - name: plugin-demo-foo
+      target: global
+      description: a simple plugin example.
+      versions:
+        - v3.15.8
+    - name: plugin-demo-bar
+      target: global
+      description: another simple plugin example.
+      versions:
+        - v3.15.8
