@@ -5,7 +5,7 @@
 One day, the Tanzu team would like a one-stop-shop set of build tools that is able to build every controller, plugin, and package that goes into a Tanzu cluster.
 Until that day, the build tooling will be utilizing tooling from other repositories in order to build and publish the various components.
 In this part of build tooling, the temporary solution in place is to download and install Tanzu CLI Plugin Builder.
-The build tooling here will wrap the Plugin Builder commands that builds and publishes Tancu CLI plugins.
+The build tooling here will wrap the Tanzu Plugin Builder commands that build and publish Tanzu CLI plugins.
 Keep an eye out for the long term solution that will not require taking and using tools from various repositories, depending on which part of a Tanzu cluster is being worked on.
 
 ## What does Build Tooling Do for Tanzu CLI Plugins?
