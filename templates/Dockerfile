@@ -62,15 +62,11 @@ RUN --mount=target=. \
 # When the first release is available, we'll get the plugin builder tool
 # from their central repository.
 FROM base AS cli-plugin-builder-install
-ARG PLUGINS_ADMIN="tanzu-framework-plugins-admin-linux-amd64"
-ARG URL="https://github.com/vmware-tanzu/tanzu-framework/releases/latest/download/${PLUGINS_ADMIN}.tar.gz"
-RUN mkdir tmp-src && \
-    cd tmp-src && \
+RUN cd /tmp && \
     git clone https://github.com/vmware-tanzu/tanzu-cli.git && \
     cd tanzu-cli/cmd/plugin/builder && \
-    go build -o tanzu-builder . && \
-    mv tanzu-builder /bin/tanzu-builder && \
-    cd /workspace && rm -r tmp-src
+    go build -o /bin/tanzu-builder . && \
+    cd /workspace
 
 # Run Tanzu plugin builder and compile all plugins in the project's cmd/cli/plugin directory.
 FROM cli-plugin-builder-install AS cli-plugin-build-prep
