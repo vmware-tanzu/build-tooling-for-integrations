@@ -27,7 +27,7 @@ Keep an eye out for the long term solution that will not require taking and usin
 - Then, run `PACKAGE_VERSION="<semantic version>" make cli-plugin-build`.
 
 ```shell
-PACKAGE_VERSION="v.1.0.0" make cli-plugin-build
+PACKAGE_VERSION="v1.0.0" make cli-plugin-build
 ```
 
 ## Running Build Tooling to Publish Tanzu CLI Plugins
