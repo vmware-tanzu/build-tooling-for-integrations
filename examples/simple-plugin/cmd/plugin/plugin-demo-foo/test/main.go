@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/vmware-tanzu/tanzu-framework/cli/runtime/plugin"
-	clitest "github.com/vmware-tanzu/tanzu-framework/cli/runtime/test"
+	"github.com/vmware-tanzu/tanzu-plugin-runtime/log"
+	"github.com/vmware-tanzu/tanzu-plugin-runtime/plugin"
+	clitest "github.com/vmware-tanzu/tanzu-plugin-runtime/test/framework"
 )
 
 var pluginName = "plugin-demo"
