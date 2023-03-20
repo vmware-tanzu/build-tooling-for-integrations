@@ -1,3 +1,6 @@
+// Copyright 2021 VMware, Inc. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 package main
 
 import (
@@ -10,56 +13,23 @@ import (
 	clitest "github.com/vmware-tanzu/tanzu-plugin-runtime/test/framework"
 )
 
-var pluginName = "plugin-demo"
-
-var descriptor = clitest.NewTestFor(pluginName)
+var descriptor = clitest.NewTestFor("test")
 
 func main() {
-	retcode := 0
-
-	defer func() { os.Exit(retcode) }()
-	defer func() { _ = Cleanup() }()
-
+	defer Cleanup()
 	p, err := plugin.NewPlugin(descriptor)
 	if err != nil {
-		log.Println(err)
-		retcode = 1
-		return
+		log.Fatal(err, "") //nolint:gocritic
 	}
 	p.Cmd.RunE = test
 	if err := p.Execute(); err != nil {
-		retcode = 1
-		return
+		os.Exit(1)
 	}
 }
 
-//nolint:gocritic
 func test(c *cobra.Command, _ []string) error {
-	m := clitest.NewMain(pluginName, c, Cleanup)
-	defer m.Finish()
-
-	// example test
-
-	// testName := clitest.GenerateName()
-	//
-	// err := m.RunTest(
-	// 	"create a plugin-demo",
-	// 	fmt.Sprintf("plugin-demo create -n %s", testName),
-	// 	func(t *clitest.Test) error {
-	// 		err := t.ExecContainsString("created")
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		return nil
-	// 	},
-	// )
-	// if err != nil {
-	// 	return err
-	// }
 	return nil
 }
 
 // Cleanup the test.
-func Cleanup() error {
-	return nil
-}
+func Cleanup() {}
