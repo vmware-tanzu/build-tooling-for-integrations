@@ -14,6 +14,12 @@ GOPROXY ?= "https://proxy.golang.org,direct"
 PLATFORM=local
 COMPONENTS ?=
 
+# The KEEP_COMPONENT_DOCKERFILE flag can be used for debugging.
+# If set to true, the component-specific Dockerfile(s)
+# generated during the fmt / vet / test / build target runs
+# will not be deleted from project root.
+KEEP_COMPONENT_DOCKERFILE ?= false
+
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.2
@@ -21,6 +27,9 @@ VERSION ?= v0.0.2
 # utility functions to check for main.go in component path
 find_main_go = $(shell find $(1) -name main.go)
 check_main_go = $(if $(call find_main_go,$(1)),Found,NotFound)
+
+# utility function to generate component-specific Dockerfiles
+template_dockerfile = $(shell ./template-dockerfile.sh $(1))
 
 ##
 ## Project Initialization Targets
@@ -98,6 +107,8 @@ package-all: package-bundle-generate-all package-bundle-push-all
 .PHONY: $(COMPONENTS)
 $(COMPONENTS):
 	$(eval COMPONENT_PATH = $(word 1,$(subst ., ,$@)))
+	@echo "$(call template_dockerfile,$(COMPONENT_PATH))"
+	$(eval COMPONENT_DOCKERFILE = $(word 1,$(subst /,.,$(COMPONENT_PATH))).Dockerfile)
 	$(eval IMAGE_NAME = $(word 2,$(subst ., ,$@)))
 	$(eval PACKAGE_PATH = $(word 3,$(subst ., ,$@)))
 	$(eval IMAGE = $(IMAGE_NAME):$(IMG_VERSION_OVERRIDE))
@@ -110,7 +121,7 @@ $(COMPONENTS):
 			$(MAKE) publish-$@ IMAGE=$(IMAGE) DEFAULT_IMAGE=$(DEFAULT_IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
 		fi \
 	else \
-		$(MAKE) build-$@ COMPONENT=$(COMPONENT) IMAGE_NAME=$(IMAGE_NAME) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
+		$(MAKE) build-$@ cleanup-component-dockerfile COMPONENT=$(COMPONENT) COMPONENT_DOCKERFILE=$(COMPONENT_DOCKERFILE) IMAGE_NAME=$(IMAGE_NAME) IMAGE=$(IMAGE) PACKAGE_PATH=$(PACKAGE_PATH) BUILD_BIN=$(BUILD_BIN); \
 	fi
 
 .PHONY: validate-component
@@ -123,8 +134,8 @@ endif
 
 .PHONY: build-%
 build-%:
-	$(MAKE) COMPONENT=$(COMPONENT) lint
-	$(MAKE) COMPONENT=$(COMPONENT) test
+	$(MAKE) COMPONENT=$(COMPONENT) COMPONENT_DOCKERFILE=$(COMPONENT_DOCKERFILE) lint
+	$(MAKE) COMPONENT=$(COMPONENT) COMPONENT_DOCKERFILE=$(COMPONENT_DOCKERFILE) test
 	@if [ "$(call check_main_go,$(COMPONENT))" = "Found" ]; then \
 		if [ "$(BUILD_BIN)" = "true" ]; then \
 			$(MAKE) COMPONENT=$(COMPONENT) binary-build; \
@@ -144,42 +155,68 @@ publish-%:
 lint:
 ifneq ($(strip $(COMPONENT)),.)
 	cp .golangci.yaml $(COMPONENT)
-	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 	rm -rf $(COMPONENT)/.golangci.yaml
 else
-	$(DOCKER) build . -f Dockerfile --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target lint --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 endif
 
 .PHONY: fmt
 # Run go fmt against code
 fmt:
-	$(DOCKER) build . -f Dockerfile --target fmt --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target fmt --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: vet
 # Perform static analysis of code
 vet:
-	$(DOCKER) build . -f Dockerfile --target vet --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target vet --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: test
 # Run tests
 test: fmt vet
-	$(DOCKER) build . -f Dockerfile --target test --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
-	@$(DOCKER) build . -f Dockerfile --target unit-test-coverage --build-arg COMPONENT=$(COMPONENT) --output build/$(COMPONENT)/coverage
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target test --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	@$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --target unit-test-coverage --build-arg COMPONENT=$(COMPONENT) --output build/$(COMPONENT)/coverage
 
 .PHONY: binary-build
 # Build the binary
 binary-build:
-	$(DOCKER) build . -f Dockerfile --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -f $(COMPONENT_DOCKERFILE) --build-arg LD_FLAGS="$(LD_FLAGS)" --target bin --output build/$(COMPONENT)/bin --platform ${PLATFORM} --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: docker-build
 # Build docker image
 docker-build:
-	$(DOCKER) build . -t $(IMAGE) -f Dockerfile --target image --platform linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
+	$(DOCKER) build . -t $(IMAGE) -f $(COMPONENT_DOCKERFILE) --target image --platform linux/amd64 --build-arg LD_FLAGS="$(LD_FLAGS)" --build-arg COMPONENT=$(COMPONENT) --build-arg GOPROXY_ARG=$(GOPROXY)
 
 .PHONY: docker-publish
 # Publish docker image
 docker-publish:
 	$(DOCKER) push $(IMAGE)
+
+.PHONY: generate-component-dockerfile
+# Generate component-specific Dockerfile
+generate-component-dockerfile:
+ifndef COMPONENT
+	$(error COMPONENT is not set)
+endif
+ifndef COMPONENT_DOCKERFILE
+	@echo "Generating component dockerfile" $(COMPONENT)
+	@echo "$(call template_dockerfile,$(COMPONENT))"
+	$(eval COMPONENT_DOCKERFILE = $(word 1,$(subst /,.,$(COMPONENT))).Dockerfile)
+endif
+
+.PHONY: cleanup-component-dockerfile
+# Remove the generated component-specific Dockerfile from project root
+cleanup-component-dockerfile:
+ifndef COMPONENT
+	$(error COMPONENT is not set)
+endif
+ifndef COMPONENT_DOCKERFILE
+	$(eval COMPONENT_DOCKERFILE = $(word 1,$(subst /,.,$(COMPONENT))).Dockerfile)
+endif
+ifeq ($(KEEP_COMPONENT_DOCKERFILE), false)
+	@echo "Removing" $(COMPONENT_DOCKERFILE)
+	rm -f $(COMPONENT_DOCKERFILE)
+endif
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml

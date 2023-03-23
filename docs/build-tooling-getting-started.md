@@ -50,7 +50,16 @@ some seed projects.
    COMPONENTS ?= module1.module1-manager.module1 client-library-module
    ```
 
-3. Run make init
+3. Update `.dockerignore` and `.gitignore` files
+
+   This is needed so that the generated component-specific Dockerfiles are not added to version-control or docker build context.
+   Add following to the `.dockerignore` and `.gitignore`
+   ```
+   # Build files related to build-tooling
+   *.Dockerfile
+   ```
+
+4. Run make init
 
    To initialize the build tooling we need to run the `init` make target, this fetches the Dockerfile that is used for
    building the image, testing the go module etc. and other templates needed by build tooling.
@@ -60,12 +69,12 @@ some seed projects.
    make init
    ```
 
-4. [Optional] For components that can generate binaries, create packages directory and add package definition in it
+5. [Optional] For components that can generate binaries, create packages directory and add package definition in it
    
    If you are using one of the seed projects, you need to customize the existing package in that project, else check 
    this [documentation](./add-package.md) on how to add a package
 
-5. Build the components in the integration
+6. Build the components in the integration
 
 
    To build the components and to generate the binaries of the components, run:
@@ -89,7 +98,7 @@ some seed projects.
    1. `OCI_REGISTRY` - remote OCI registry where you would like to push the built image.
    2. `IMG_VERSION_OVERRIDE` - image tag for the image to be built.
    
-6. [Optional] Publish the images
+7. [Optional] Publish the images
    
    To publish the images built in the previous step, run
 
@@ -97,7 +106,7 @@ some seed projects.
       make docker-publish-all
    ```
 
-7. [Optional] Build and publish package bundles 
+8. [Optional] Build and publish package bundles 
 
    To build and publish the package bundles in the integration, run
 
