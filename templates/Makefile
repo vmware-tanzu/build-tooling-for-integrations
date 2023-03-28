@@ -18,9 +18,11 @@ BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.2
 
-IMGPKG_VERSION ?= $(shell awk 'BEGIN{ RS="- " }{ if( $$2=="imgpkg" ){ print $$4 } }' ../../package-tools/cmd/config/carvel-tools-config.yaml)
+CLI_PLUGINS ?= "*"
+CLI_PLUGIN_VERSION ?= v0.0.1
+IMGPKG_VERSION ?= v0.11.0
 
-# utility functions to check for main.go in component path
+# Utility functions check for main.go in component path.
 find_main_go = $(shell find $(1) -name main.go)
 check_main_go = $(if $(call find_main_go,$(1)),Found,NotFound)
 
@@ -88,7 +90,7 @@ docker-build-all: $(COMPONENTS)
 docker-publish-all: PUBLISH_IMAGES:=true
 docker-publish-all: $(COMPONENTS)
 
-.PHONY: build-all
+.PHONY: build-all cli-plugin-build
 # Run linter, tests and build binaries
 build-all: BUILD_BIN:=true
 build-all: $(COMPONENTS)
@@ -190,24 +192,33 @@ plugin-builder-install:
 	docker build . -f Dockerfile --target cli-plugin-builder-install
 
 .PHONY: cli-plugin-build
-cli-plugin-build: install-registry cli-plugin-builder-install
-	docker build --network=host . -f Dockerfile \
+CLI_PLUGINS_PARSE := $(eval CLI_PLUGINS=$(if $(CLI_PLUGINS)="*", $(shell cd cmd/plugin && ls -d * && cd ../..)))
+CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(CLI_PLUGINS))
+cli-plugin-build:
+	$(MAKE) $(CLI_PLUGIN_TARGETS)
+
+.PHONY: cli-plugin-build-%
+cli-plugin-build-%: install-registry cli-plugin-builder-install
+	$(DOCKER) build --network=host . -f Dockerfile \
 	--target cli-plugin-build \
 	--output build \
 	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
-	--build-arg VERSION=$(PACKAGE_VERSION) \
-	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT)
+	--build-arg CLI_PLUGIN_VERSION=$(CLI_PLUGIN_VERSION) \
+	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT) \
+	--build-arg CLI_PLUGIN=$* \
+	--build-arg COMPONENT=cmd/plugin/$*
 
 .PHONY: cli-plugin-publish
-cli-plugin-publish: plugin-builder-install
-	docker build . -f Dockerfile \
+cli-plugin-publish: cli-plugin-builder-install
+	$(DOCKER) build . -f Dockerfile \
 	--target cli-plugin-publish \
 	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
 	--build-arg REPOSITORY=$(OCI_REGISTRY) \
 	--build-arg IMGPKG_USERNAME=$(REGISTRY_USERNAME) \
 	--build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD) \
 	--build-arg PUBLISHER=$(PUBLISHER) \
-	--build-arg VENDOR=$(VENDOR)
+	--build-arg VENDOR=$(VENDOR) \
+	--build-arg COMPONENT=cmd/plugin/plugin-demo-foo
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml

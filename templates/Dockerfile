@@ -8,13 +8,15 @@ ARG COMPONENT
 ARG GOPROXY_ARG
 ENV GOPROXY=${GOPROXY_ARG}
 ARG IMGPKG_VERSION
+ARG TARGETARCH
 WORKDIR /workspace
-COPY "$COMPONENT"/go.* ./
-RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
+RUN --mount=target=. \
+    --mount=type=cache,target=/go/pkg/mod \
+    cd $COMPONENT && go mod download
+
 # The imgpkg tool is required for Tanzu CLI Plugin Builder.
 RUN if [ -n "${IMGPKG_VERSION}" ]; \
-    then wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-amd64 && \
+    then wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-${TARGETARCH} && \
     chmod +x /bin/imgpkg;fi
 
 # Linting
@@ -70,18 +72,19 @@ RUN cd /tmp && \
 
 # Run Tanzu plugin builder and compile all plugins in the project's cmd/cli/plugin directory.
 FROM cli-plugin-builder-install AS cli-plugin-build-prep
-ARG VERSION
+ARG CLI_PLUGIN_VERSION
+ARG CLI_PLUGIN
 ARG OCI_REGISTRY
 RUN --mount=type=bind,readwrite \
-    tanzu-builder plugin build \
-        --version "${VERSION}" \
+    tanzu-builder plugin build --match "${CLI_PLUGIN}" \
+        --version "${CLI_PLUGIN_VERSION}" \
         --binary-artifacts "./artifacts/plugins" && \
     tanzu-builder plugin build-package \
         --oci-registry "${OCI_REGISTRY}" && \
     mkdir -p /out/plugin-artifacts && \
     cp -r artifacts /out/plugin-artifacts
 
-# Run Tanzu plugin builder and publish all plugins in the project's cmd/cli/plugin directory.
+# Run Tanzu plugin builder and publish all plugins in the project's cmd/plugin directory.
 FROM cli-plugin-builder-install AS cli-plugin-publish
 ARG REPOSITORY
 ARG PUBLISHER
