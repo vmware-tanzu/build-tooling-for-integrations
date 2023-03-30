@@ -7,17 +7,10 @@ FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE as base
 ARG COMPONENT
 ARG GOPROXY_ARG
 ENV GOPROXY=${GOPROXY_ARG}
-ARG IMGPKG_VERSION
-ARG TARGETARCH
 WORKDIR /workspace
 RUN --mount=target=. \
     --mount=type=cache,target=/go/pkg/mod \
     cd $COMPONENT && go mod download
-
-# The imgpkg tool is required for Tanzu CLI Plugin Builder.
-RUN if [ -n "${IMGPKG_VERSION}" ]; \
-    then wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-${TARGETARCH} && \
-    chmod +x /bin/imgpkg;fi
 
 # Linting
 FROM golangci/golangci-lint:latest AS lint-base
@@ -58,12 +51,19 @@ RUN --mount=target=. \
     --mount=type=cache,target=/go/pkg/mod \
     cd $COMPONENT && CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -o /out/manager ./main.go
 
+# Download and install Carvel's imgpkg program.
+FROM base as carvel-base
+ARG IMGPKG_VERSION
+ARG TARGETARCH
+RUN wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/download/${IMGPKG_VERSION}/imgpkg-linux-${TARGETARCH} && \
+    chmod +x /bin/imgpkg
+
 # Download, extract, and install Tanzu CLI Plugin Builder
 # Note: Until the first version of Tanzu CLI is released, we will be cloning
 # the vmware-tanzu/tanzu-cli repo and building the plugin builder here.
 # When the first release is available, we'll get the plugin builder tool
 # from their central repository.
-FROM base AS cli-plugin-builder-install
+FROM carvel-base AS cli-plugin-builder-install
 RUN cd /tmp && \
     git clone https://github.com/vmware-tanzu/tanzu-cli.git && \
     cd tanzu-cli/cmd/plugin/builder && \
@@ -85,7 +85,7 @@ RUN --mount=type=bind,readwrite \
     cp -r artifacts /out/plugin-artifacts
 
 # Run Tanzu plugin builder and publish all plugins in the project's cmd/plugin directory.
-FROM cli-plugin-builder-install AS cli-plugin-publish
+FROM cli-plugin-builder-install AS cli-plugin-publish 
 ARG REPOSITORY
 ARG PUBLISHER
 ARG VENDOR

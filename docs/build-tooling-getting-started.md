@@ -6,6 +6,10 @@ integrations.
 If you would like to use the build tooling for a new integration, check out the `examples` directory which contains 
 some seed projects.
 
+Detailed steps on how to use Build Tooling for Integrations for building and publishing controllers are at [Steps to use the build tooling](#steps-to-use-the-build-tooling)
+
+Detailed steps on how to use Build Tooling for Integrations for building and publishing Tanzu CLI plugins are at [Build Tooling for Tanzu CLI Plugins](#build-tooling-for-tanzu-cli-plugins)
+
 ## Steps to use the build tooling
 
 1. Copy the contents of the Makefile
@@ -170,6 +174,7 @@ You should now see plugin binaries in `build/artifacts/plugins`, and plugin pack
 ### Running Build Tooling for Integrations to Publish Tanzu CLI Plugins
 
 - Before you can publish plugin packages, you need to have built them first. So, complete the [Running Build Tooling for Integrations to Build Tanzu CLI Plugins](#running-build-tooling-for-integrations-to-build-tanzu-cli-plugins) step before doing this step.
+- Select which plugins and which versions of the plugins are to be published by editing [plugin_manifest.yaml file](examples/multi-module-integration/build/artifacts/packages/plugin_manifest.yaml).
 - You need to set a few environment variables: REGISTRY_USERNAME, REGISTRY_PASSWORD, OCI_REGISTRY, PUBLISHER, AND VENDOR.
 - Then, run REGISTRY_USERNAME=<username> REGISTRY_PASSWORD=<password> OCI_REGISTRY=<registry> PUBLISHER=<your organization> VENDOR=<plugin author> make cli-plugin-publish.
 
