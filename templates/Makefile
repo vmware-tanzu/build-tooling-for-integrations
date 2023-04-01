@@ -192,13 +192,12 @@ plugin-builder-install:
 	docker build . -f Dockerfile --target cli-plugin-builder-install
 
 .PHONY: cli-plugin-build
-CLI_PLUGINS_PARSE := $(eval CLI_PLUGINS=$(if $(CLI_PLUGINS)="*", $(shell cd cmd/plugin && ls -d * && cd ../..)))
-CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(CLI_PLUGINS))
-cli-plugin-build:
+CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell if [ $(CLI_PLUGINS) == "*" ]; then echo $(shell cd cmd/plugin && ls -d * && cd ../..); else echo $(CLI_PLUGINS); fi))
+cli-plugin-build: install-registry cli-plugin-builder-install
 	$(MAKE) $(CLI_PLUGIN_TARGETS)
 
 .PHONY: cli-plugin-build-%
-cli-plugin-build-%: install-registry cli-plugin-builder-install
+cli-plugin-build-%:
 	$(DOCKER) build --network=host . -f Dockerfile \
 	--target cli-plugin-build \
 	--output build \
