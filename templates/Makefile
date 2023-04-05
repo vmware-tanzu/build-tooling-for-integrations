@@ -18,7 +18,11 @@ BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
 VERSION ?= v0.0.2
 
-# utility functions to check for main.go in component path
+CLI_PLUGINS ?= "*"
+CLI_PLUGIN_VERSION ?= v0.0.1
+IMGPKG_VERSION ?= v0.11.0
+
+# Utility functions check for main.go in component path.
 find_main_go = $(shell find $(1) -name main.go)
 check_main_go = $(if $(call find_main_go,$(1)),Found,NotFound)
 
@@ -86,7 +90,7 @@ docker-build-all: $(COMPONENTS)
 docker-publish-all: PUBLISH_IMAGES:=true
 docker-publish-all: $(COMPONENTS)
 
-.PHONY: build-all
+.PHONY: build-all cli-plugin-build
 # Run linter, tests and build binaries
 build-all: BUILD_BIN:=true
 build-all: $(COMPONENTS)
@@ -180,6 +184,40 @@ docker-build:
 # Publish docker image
 docker-publish:
 	$(DOCKER) push $(IMAGE)
+
+# Tanzu CLI Plugin Builder is used to compile and publish Tanzu CLI plugins.
+# https://github.com/vmware-tanzu/tanzu-cli/tree/main/cmd/plugin/builder
+.PHONY: cli-plugin-builder-install
+plugin-builder-install:
+	docker build . -f Dockerfile --target cli-plugin-builder-install
+
+.PHONY: cli-plugin-build
+CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell if [ $(CLI_PLUGINS) == "*" ]; then echo $(shell cd cmd/plugin && ls -d * && cd ../..); else echo $(CLI_PLUGINS); fi))
+cli-plugin-build: install-registry cli-plugin-builder-install
+	$(MAKE) $(CLI_PLUGIN_TARGETS)
+
+.PHONY: cli-plugin-build-%
+cli-plugin-build-%:
+	$(DOCKER) build --network=host . -f Dockerfile \
+	--target cli-plugin-build \
+	--output build \
+	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
+	--build-arg CLI_PLUGIN_VERSION=$(CLI_PLUGIN_VERSION) \
+	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT) \
+	--build-arg CLI_PLUGIN=$* \
+	--build-arg COMPONENT=cmd/plugin/$*
+
+.PHONY: cli-plugin-publish
+cli-plugin-publish: cli-plugin-builder-install
+	$(DOCKER) build . -f Dockerfile \
+	--target cli-plugin-publish \
+	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
+	--build-arg REPOSITORY=$(OCI_REGISTRY) \
+	--build-arg IMGPKG_USERNAME=$(REGISTRY_USERNAME) \
+	--build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD) \
+	--build-arg PUBLISHER=$(PUBLISHER) \
+	--build-arg VENDOR=$(VENDOR) \
+	--build-arg COMPONENT=cmd/plugin/plugin-demo-foo
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
