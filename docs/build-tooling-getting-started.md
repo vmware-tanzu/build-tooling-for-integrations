@@ -176,12 +176,15 @@ You should now see plugin binaries in `build/artifacts/plugins`, and plugin pack
 - Before you can publish plugin packages, you need to have built them first. So, complete the [Running Build Tooling for Integrations to Build Tanzu CLI Plugins](#running-build-tooling-for-integrations-to-build-tanzu-cli-plugins) step before doing this step.
 - Select which plugins and which versions of the plugins are to be published by editing [plugin_manifest.yaml file](examples/multi-module-integration/build/artifacts/packages/plugin_manifest.yaml).
 - You need to set a few environment variables: REGISTRY_USERNAME, REGISTRY_PASSWORD, OCI_REGISTRY, PUBLISHER, AND VENDOR.
-- Then, run REGISTRY_USERNAME=<username> REGISTRY_PASSWORD=<password> OCI_REGISTRY=<registry> PUBLISHER=<your organization> VENDOR=<plugin author> make cli-plugin-publish.
+   - Using the GitHub Container Registry as an example, the OCI_REGISTRY is `ghcr.io`.
+   - The VENDOR is your GitHub username.
+   - The PUBLISHER is your GitHub repository name.
+- Run REGISTRY_USERNAME=<username> REGISTRY_PASSWORD=<password> OCI_REGISTRY=<registry> VENDOR=<organization>  PUBLISHER=<project> make cli-plugin-publish.
 
 Here is an example:
 
 ```shell
-REGISTRY_USERNAME=codegold79 REGISTRY_PASSWORD=correcthorsebatterystaple OCI_REGISTRY=ghcr.io PUBLISHER=cgExamples VENDOR=codegold79 make cli-plugin-publish
+REGISTRY_USERNAME=codegold79 REGISTRY_PASSWORD=correcthorsebatterystaple OCI_REGISTRY=ghcr.io VENDOR=codegold79 PUBLISHER=cg-examples make cli-plugin-publish
 ```
 
 You should see the plugin packages uploaded to your OCI_REGISTRY.
