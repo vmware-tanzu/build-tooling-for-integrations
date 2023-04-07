@@ -217,7 +217,7 @@ cli-plugin-publish: cli-plugin-builder-install
 	--build-arg IMGPKG_PASSWORD=$(REGISTRY_PASSWORD) \
 	--build-arg PUBLISHER=$(PUBLISHER) \
 	--build-arg VENDOR=$(VENDOR) \
-	--build-arg COMPONENT=cmd/plugin/plugin-demo-foo
+	--build-arg COMPONENT=cmd/plugin/*
 
 .PHONY: kbld-image-replace
 # Add newImage in kbld-config.yaml
