@@ -1,3 +1,3 @@
 module example.com/simple-integration
 
-go 1.18
+go 1.19
