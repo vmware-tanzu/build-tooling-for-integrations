@@ -1,6 +1,6 @@
 module github.com/vmware-tanzu/build-tooling-for-integrations/examples/multi-module-integration/cmd/plugin/plugin-demo-bar
 
-go 1.18
+go 1.19
 
 require (
 	github.com/spf13/cobra v1.6.1
