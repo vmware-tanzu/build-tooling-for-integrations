@@ -192,20 +192,22 @@ plugin-builder-install:
 	docker build . -f Dockerfile --target cli-plugin-builder-install
 
 .PHONY: cli-plugin-build
-CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell if [ $(CLI_PLUGINS) == "*" ]; then echo $(shell cd cmd/plugin && ls -d * && cd ../..); else echo $(CLI_PLUGINS); fi))
+CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell if [ "$(CLI_PLUGINS)" == "*" ]; then echo $(shell cd cmd/plugin && ls -d * && cd ../..); else echo $(CLI_PLUGINS); fi))
 cli-plugin-build: install-registry cli-plugin-builder-install
 	$(MAKE) $(CLI_PLUGIN_TARGETS)
 
 .PHONY: cli-plugin-build-%
 cli-plugin-build-%:
-	$(DOCKER) build --network=host . -f Dockerfile \
-	--target cli-plugin-build \
-	--output build \
-	--build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
-	--build-arg CLI_PLUGIN_VERSION=$(CLI_PLUGIN_VERSION) \
-	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT) \
-	--build-arg CLI_PLUGIN=$* \
-	--build-arg COMPONENT=cmd/plugin/$*
+	$(MAKE) COMPONENT=cmd/plugin/$* lint
+	$(MAKE) COMPONENT=cmd/plugin/$* test
+	# $(DOCKER) build --network=host . -f Dockerfile \
+	# --target cli-plugin-build \
+	# --output build \
+	# --build-arg IMGPKG_VERSION=$(IMGPKG_VERSION) \
+	# --build-arg CLI_PLUGIN_VERSION=$(CLI_PLUGIN_VERSION) \
+	# --build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT) \
+	# --build-arg CLI_PLUGIN=$* \
+	# --build-arg COMPONENT=cmd/plugin/$*
 
 .PHONY: cli-plugin-publish
 cli-plugin-publish: cli-plugin-builder-install
