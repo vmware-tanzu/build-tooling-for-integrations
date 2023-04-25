@@ -1,4 +1,4 @@
-// Copyright 2021 VMware, Inc. All Rights Reserved.
+// Copyright 2023 VMware, Inc. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
 package main
@@ -27,7 +27,7 @@ func main() {
 	}
 }
 
-func test(c *cobra.Command, _ []string) error {
+func test(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
