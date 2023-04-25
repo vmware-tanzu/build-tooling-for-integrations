@@ -1,6 +1,9 @@
 # Description
-_Include a summary of the change. If this change fixes an issue, indicate that on the `Fixes` line. Briefly include
-relevant context and motivation._
+_Include a summary of the change.
+All PRs require an associated issue, even if the fix is trivial, e.g. fixing a typo.
+If this change fixes an issue, indicate that on the `Fixes` line.
+If this change partially fixes or addresses and issue, indicate that with `Updates` in stead of `Fixes`.
+Briefly include relevant context and motivation._
 
 Fixes #{issue}
 
