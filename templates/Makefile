@@ -229,6 +229,7 @@ kbld-image-replace:
 	  -e KBLD_CONFIG_FILE_PATH=$(KBLD_CONFIG_FILE_PATH) \
 	  -e DEFAULT_IMAGE=$(DEFAULT_IMAGE) \
 	  -e NEW_IMAGE=$(IMAGE) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -243,6 +244,7 @@ package-bundle-generate:
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
 	  -e PACKAGE_VERSION=$(PACKAGE_VERSION) \
 	  -e PACKAGE_SUB_VERSION=$(PACKAGE_SUB_VERSION) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -257,6 +259,7 @@ package-bundle-generate-all:
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
 	  -e PACKAGE_VERSION=$(PACKAGE_VERSION) \
 	  -e PACKAGE_SUB_VERSION=$(PACKAGE_SUB_VERSION) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -273,6 +276,7 @@ package-bundle-push:
 	  -e REGISTRY_USERNAME=$(REGISTRY_USERNAME) \
 	  -e REGISTRY_PASSWORD=$(REGISTRY_PASSWORD) \
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -289,6 +293,7 @@ package-bundle-push-all:
 	  -e REGISTRY_USERNAME=$(REGISTRY_USERNAME) \
 	  -e REGISTRY_PASSWORD=$(REGISTRY_PASSWORD) \
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -303,6 +308,7 @@ repo-bundle-generate:
 	  -e REPO_BUNDLE_VERSION=$(REPO_BUNDLE_VERSION) \
 	  -e REPO_BUNDLE_SUB_VERSION=$(REPO_BUNDLE_SUB_VERSION) \
 	  -e PACKAGE_VALUES_FILE=$(PACKAGE_VALUES_FILE) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -319,6 +325,7 @@ repo-bundle-push:
 	  -e REGISTRY_USERNAME=$(REGISTRY_USERNAME) \
 	  -e REGISTRY_PASSWORD=$(REGISTRY_PASSWORD) \
 	  -e REGISTRY_SERVER=$(REGISTRY_SERVER) \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
@@ -328,6 +335,7 @@ repo-bundle-push:
 package-vendir-sync:
 	@$(DOCKER) run \
 	  -e OPERATIONS=vendir_sync \
+	  -e SRC_PATH=$(SRC_PATH) \
 	  -v /var/run/docker.sock:/var/run/docker.sock \
 	  -v $(PWD):/workspace \
 		$(PACKAGING_CONTAINER_IMAGE):$(VERSION)
