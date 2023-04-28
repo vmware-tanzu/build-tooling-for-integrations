@@ -12,7 +12,11 @@ docker container stop registry && docker container rm -v registry || true
 echo "Starting local docker registry..."
 docker run -d -p 5001:5000 --name registry mirror.gcr.io/library/registry:2
 
-cd /workspace
+cd /workspace/${SRC_PATH}
+
+if [ ! -z "${SRC_PATH}" ]; then
+  git config --global --add safe.directory /workspace/${SRC_PATH}
+fi
 
 # Install needed Carvel binaries for building packages
 echo "Downloading carvel binaries..."
