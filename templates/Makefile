@@ -16,7 +16,7 @@ COMPONENTS ?=
 
 BUILD_TOOLING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/build-tooling
 PACKAGING_CONTAINER_IMAGE ?= ghcr.io/vmware-tanzu/package-tooling
-VERSION ?= v0.0.2
+VERSION ?= v0.1.0
 
 CLI_PLUGIN_VERSION ?= v0.0.1
 IMGPKG_VERSION ?= v0.11.0
