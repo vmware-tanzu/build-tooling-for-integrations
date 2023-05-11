@@ -211,7 +211,8 @@ cli-plugin-build-%:
 	--build-arg CLI_PLUGIN_VERSION=$(CLI_PLUGIN_VERSION) \
 	--build-arg OCI_REGISTRY=$(REGISTRY_ENDPOINT) \
 	--build-arg CLI_PLUGIN=$* \
-	--build-arg COMPONENT=cmd/plugin/$*
+	--build-arg COMPONENT=cmd/plugin/$* \
+	--build-arg CLI_PLUGIN_GO_FLAGS=$(CLI_PLUGIN_GO_FLAGS)
 
 .PHONY: cli-plugin-publish
 cli-plugin-publish: cli-plugin-builder-install
