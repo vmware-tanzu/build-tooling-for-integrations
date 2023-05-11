@@ -14,7 +14,7 @@ RUN --mount=target=. \
     cd $COMPONENT && go mod download
 
 # Linting
-FROM golangci/golangci-lint:latest AS lint-base
+FROM golangci/golangci-lint:v1.52.2 AS lint-base
 FROM base AS lint
 RUN --mount=target=. \
     --mount=from=lint-base,src=/usr/bin/golangci-lint,target=/usr/bin/golangci-lint \
