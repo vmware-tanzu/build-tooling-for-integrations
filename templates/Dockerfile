@@ -87,7 +87,9 @@ ARG OCI_REGISTRY
 ARG CLI_PLUGIN_GO_FLAGS
 RUN --mount=type=bind,readwrite \
     --mount=from=carvel-base,src=/bin/imgpkg,target=/bin/imgpkg \
-    tanzu-builder plugin build --match "${CLI_PLUGIN}" \
+    tanzu-builder plugin build \
+        --match "${CLI_PLUGIN}" \
+        --os-arch linux_amd64 --os-arch windows_amd64 --os-arch darwin_amd64 \
         --version "${CLI_PLUGIN_VERSION}" \
         --binary-artifacts "./artifacts/plugins" \
         --goflags "${CLI_PLUGIN_GO_FLAGS}" && \
