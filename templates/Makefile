@@ -191,12 +191,7 @@ plugin-builder-install:
 	docker build . -f Dockerfile --target cli-plugin-builder-install
 
 .PHONY: cli-plugin-build
-CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell \
-	if [ -z "$(CLI_PLUGINS)" ]; \
-	then printf "$(shell [ -d "cmd/plugin" ] && cd cmd/plugin && printf "%s" */ | sed 's/\// /g' && cd ../..)";
-	else printf "$(CLI_PLUGINS)"; \
-	fi \
-))
+CLI_PLUGIN_TARGETS := $(addprefix cli-plugin-build-, $(shell if [ -z "$(CLI_PLUGINS)" ]; then printf "$(shell [ -d "cmd/plugin" ] && cd cmd/plugin && printf "%s" */ | sed 's/\// /g' && cd ../..)"; else printf "$(CLI_PLUGINS)"; fi))
 cli-plugin-build: install-registry cli-plugin-builder-install
 	$(MAKE) $(CLI_PLUGIN_TARGETS)
 
