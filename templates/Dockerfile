@@ -84,11 +84,13 @@ FROM cli-plugin-builder-install AS cli-plugin-build-prep
 ARG CLI_PLUGIN_VERSION
 ARG CLI_PLUGIN
 ARG OCI_REGISTRY
+ARG CLI_PLUGIN_GO_FLAGS
 RUN --mount=type=bind,readwrite \
     --mount=from=carvel-base,src=/bin/imgpkg,target=/bin/imgpkg \
     tanzu-builder plugin build --match "${CLI_PLUGIN}" \
         --version "${CLI_PLUGIN_VERSION}" \
-        --binary-artifacts "./artifacts/plugins" && \
+        --binary-artifacts "./artifacts/plugins" \
+        --goflags "${CLI_PLUGIN_GO_FLAGS}" && \
     tanzu-builder plugin build-package \
         --oci-registry "${OCI_REGISTRY}" && \
     mkdir -p /out/plugin-artifacts && \
