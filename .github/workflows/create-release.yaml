@@ -43,18 +43,18 @@ jobs:
           git add version CHANGELOG.md examples/ package-tooling-image/Dockerfile templates/Makefile
           git commit --message "Updates for release v${{ github.event.inputs.version }}"
           echo "::set-output name=commit::$(git rev-parse HEAD)"
+      - name: Push new branch
+        run: git push origin release/v${{ github.event.inputs.version }}
       - name: Create Release
         uses: thomaseizinger/create-release@1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          target_commitish: ${{ steps.make-commit.outputs.commit }}
           tag_name: v${{ github.event.inputs.version }}
           name: v${{ github.event.inputs.version }}
           draft: false
           prerelease: false
-      - name: Push new branch
-        run: git push origin release/v${{ github.event.inputs.version }}
       - name: Create pull request into main
         uses: thomaseizinger/create-pull-request@1.0.0
         with:
