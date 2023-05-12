@@ -16,6 +16,8 @@ cd /workspace/${SRC_PATH}
 
 if [ ! -z "${SRC_PATH}" ]; then
   git config --global --add safe.directory /workspace/${SRC_PATH}
+else
+  git config --global --add safe.directory /workspace
 fi
 
 # Install needed Carvel binaries for building packages
