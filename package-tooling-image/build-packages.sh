@@ -10,7 +10,7 @@ fi
 echo "Stopping and removing any existing local docker registry..."
 docker container stop registry && docker container rm -v registry || true
 echo "Starting local docker registry..."
-docker run -d -p 5001:5000 --name registry mirror.gcr.io/library/registry:2
+docker run -d -p 5001:5000 --name registry mirror.gcr.io/library/registry:2.8
 
 cd /workspace/${SRC_PATH}
 
@@ -70,6 +70,7 @@ if [[ "${OPERATIONS}" == *"repo_bundle_generate"* ]]; then
   package-tools repo-bundle generate \
   --repository="${PACKAGE_REPOSITORY}" \
   --version="${REPO_BUNDLE_VERSION}" \
+  --thick="${THICK}" \
   --sub-version="${REPO_BUNDLE_SUB_VERSION}" \
   --registry="${OCI_REGISTRY}" \
   --package-values-file="${PACKAGE_VALUES_FILE}" \

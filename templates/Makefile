@@ -304,6 +304,7 @@ repo-bundle-generate:
 	@$(DOCKER) run \
 	  -e OPERATIONS=repo_bundle_generate \
 	  -e PACKAGE_REPOSITORY=$(PACKAGE_REPOSITORY) \
+	  -e THICK=true \
 	  -e OCI_REGISTRY=$(OCI_REGISTRY) \
 	  -e REPO_BUNDLE_VERSION=$(REPO_BUNDLE_VERSION) \
 	  -e REPO_BUNDLE_SUB_VERSION=$(REPO_BUNDLE_SUB_VERSION) \
