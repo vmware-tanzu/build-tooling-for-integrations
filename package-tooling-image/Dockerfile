@@ -25,7 +25,7 @@ RUN apt-get update && \
 
 RUN curl -sSL https://get.docker.com/ | sh
 
-RUN go install github.com/vmware-tanzu/build-tooling-for-integrations/package-tools@${PACKAGE_TOOLS_VERSION}
+RUN go install github.com/vmware-tanzu/build-tooling-for-integrations/package-tools@supportThickTarOption
 
 COPY package-tooling-image/build-packages.sh /build-packages.sh
 ENTRYPOINT ["/build-packages.sh"]

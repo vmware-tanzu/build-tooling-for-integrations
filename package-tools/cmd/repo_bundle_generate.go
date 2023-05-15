@@ -37,7 +37,7 @@ func init() {
 	repoBundleGenerateCmd.Flags().StringVar(&subVersion, "sub-version", "", "Package subversion of a package in repo bundle")
 	repoBundleGenerateCmd.Flags().StringVar(&packageValuesFile, "package-values-file", "", "File containing the packages configuration")
 	repoBundleGenerateCmd.Flags().StringVar(&localRegistryURL, "local-registry-url", "", "Local registry URL for building packages")
-	packageBundleGenerateCmd.Flags().BoolVar(&thick, "thick", false, "Generate thick repo bundle")
+	repoBundleGenerateCmd.Flags().BoolVar(&thick, "thick", false, "Generate thick repo bundle")
 	repoBundleGenerateCmd.MarkFlagRequired("repository") //nolint: errcheck
 	repoBundleGenerateCmd.MarkFlagRequired("registry")   //nolint: errcheck
 	repoBundleGenerateCmd.MarkFlagRequired("version")    //nolint: errcheck
