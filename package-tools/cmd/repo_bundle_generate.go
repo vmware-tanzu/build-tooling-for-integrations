@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/vmware-tanzu/carvel-imgpkg/pkg/imgpkg/lockconfig"
+
 	"github.com/vmware-tanzu/build-tooling-for-integrations/package-tools/constants"
 	"github.com/vmware-tanzu/build-tooling-for-integrations/package-tools/utils"
 )
@@ -36,6 +37,7 @@ func init() {
 	repoBundleGenerateCmd.Flags().StringVar(&subVersion, "sub-version", "", "Package subversion of a package in repo bundle")
 	repoBundleGenerateCmd.Flags().StringVar(&packageValuesFile, "package-values-file", "", "File containing the packages configuration")
 	repoBundleGenerateCmd.Flags().StringVar(&localRegistryURL, "local-registry-url", "", "Local registry URL for building packages")
+	repoBundleGenerateCmd.Flags().BoolVar(&thick, "thick", false, "Generate thick repo bundle")
 	repoBundleGenerateCmd.MarkFlagRequired("repository") //nolint: errcheck
 	repoBundleGenerateCmd.MarkFlagRequired("registry")   //nolint: errcheck
 	repoBundleGenerateCmd.MarkFlagRequired("version")    //nolint: errcheck
@@ -255,6 +257,37 @@ func generateRepoBundle(projectRootDir string) error {
 	tarBallFileName := packageRepository + "-repo-" + tarballVersion + ".tar.gz"
 	if err := utils.CreateTarball(tarBallPath, tarBallFileName, tarBallPath); err != nil {
 		return fmt.Errorf("couldn't generate package bundle: %w", err)
+	}
+
+	// create thick tarball
+	if thick {
+		fmt.Println("Including thick repo bundle tarball...")
+		var cmdErr bytes.Buffer
+
+		repoBundleURL := fmt.Sprintf("%s/%s:%s", localRegistryURL, packageRepository, tarballVersion)
+		repoBundlePath := filepath.Join(projectRootDir, constants.RepoBundlesDir, packageRepository)
+		imgpkgPushCmd := exec.Command(
+			filepath.Join(toolsBinDir, "imgpkg"),
+			"push",
+			"-b", repoBundleURL,
+			"--file", repoBundlePath,
+		) // #nosec G204
+		imgpkgPushCmd.Stderr = &cmdErr
+		if err := imgpkgPushCmd.Run(); err != nil {
+			return fmt.Errorf("failed pushing package bundle to local registry: %s", cmdErr.String())
+		}
+
+		tarBallFileName = packageRepository + "-repo-" + tarballVersion + "-thick.tar.gz"
+		imgpkgCopyCmd := exec.Command(
+			filepath.Join(toolsBinDir, "imgpkg"),
+			"copy",
+			"-b", repoBundleURL,
+			"--to-tar", filepath.Join(tarBallPath, tarBallFileName),
+		) // #nosec G204
+		imgpkgCopyCmd.Stderr = &cmdErr
+		if err := imgpkgCopyCmd.Run(); err != nil {
+			return fmt.Errorf("couldn't generate thick tarball: %s", cmdErr.String())
+		}
 	}
 
 	return nil
