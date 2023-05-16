@@ -259,7 +259,7 @@ func generateRepoBundle(projectRootDir string) error {
 		return fmt.Errorf("couldn't generate package bundle: %w", err)
 	}
 
-	// create thick tarball
+	// Create thick tarball
 	if thick {
 		fmt.Println("Including thick repo bundle tarball...")
 		var cmdErr bytes.Buffer
