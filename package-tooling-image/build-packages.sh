@@ -6,11 +6,16 @@ if [ ! -z "${REGISTRY_USERNAME:-}" ] && [ ! -z "${REGISTRY_PASSWORD:-}" ] && [ !
    docker login --username "${REGISTRY_USERNAME}" --password "${REGISTRY_PASSWORD}" "${REGISTRY_SERVER}"
 fi
 
+# Setting the OCI_REGISTRY to local registry to support building package bundles and repo bundle in air-gapped scenarios
+if [ ! -z "${OCI_REGISTRY}" ]; then
+  export OCI_REGISTRY="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' registry):5000"
+fi
+
 # Start a local docker registry
 echo "Stopping and removing any existing local docker registry..."
 docker container stop registry && docker container rm -v registry || true
 echo "Starting local docker registry..."
-docker run -d -p 5001:5000 --name registry mirror.gcr.io/library/registry:2.8
+docker run -d -p 5001:5000 --name registry registry:2.8
 
 cd /workspace/${SRC_PATH}
 
