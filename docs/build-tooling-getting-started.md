@@ -179,7 +179,7 @@ You should now see plugin binaries in `build/artifacts/plugins`, and plugin pack
    - Using the GitHub Container Registry as an example, the OCI_REGISTRY is `ghcr.io`.
    - The VENDOR is your GitHub username.
    - The PUBLISHER is your GitHub repository name.
-- Run REGISTRY_USERNAME=<username> REGISTRY_PASSWORD=<password> OCI_REGISTRY=<registry> VENDOR=<organization>  PUBLISHER=<project> make cli-plugin-publish.
+- Run `REGISTRY_USERNAME=<username> REGISTRY_PASSWORD=<password> OCI_REGISTRY=<registry> VENDOR=<organization>  PUBLISHER=<project> make cli-plugin-publish`.
 
 Here is an example:
 
