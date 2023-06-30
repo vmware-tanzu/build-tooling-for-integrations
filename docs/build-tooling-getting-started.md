@@ -143,6 +143,7 @@ Keep an eye out for the long term solution that will not require taking and usin
 - All plugin logic must be in their own directories in `cmd/plugin`. See the plugins in `examples/multi-module-integration/cmd/plugin` as an example.
 - *REQUIRED*: plugin directories must be named after the plugins that they hold. For example, the `cmd/plugin/plugin-demo-bar` is named after the plugin which has the name `plugin-demo-bar`.
 - If you're starting to build your plugin from scratch, copy the `simple-plugin/cm/plugin/plugin-demo-foo` directory and it contents. Update the plugin name, description and logic. Add your own [Cobra](https://github.com/spf13/cobra) commands to your plugin.
+- *OPTIONAL*: We are using the Tanzu CLI Plugin Builder to build and publish plugins. The recommended way of installing the Tanzu Builder is by first installing Tanzu CLI with the help of a package manager. Although it is not recommended, you do have the option of downloading the Tanzu Builder binary and storing it in the build/artifacts/plugin directory, giving the binary the name, `tanzu_builder`. This method is more direct, bypassing the need for Tanzu CLI, but it does not keep track of version, and has high potential of causing errors.
 
 ### Running Build Tooling for Integrations to Build Tanzu CLI Plugins
 
