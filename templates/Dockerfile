@@ -73,9 +73,9 @@ RUN wget -O /bin/imgpkg https://github.com/vmware-tanzu/carvel-imgpkg/releases/d
 FROM --platform=${BUILDPLATFORM} $BUILDER_BASE_IMAGE AS cli-plugin-builder-install
 ARG TANZU_CLI_VERSION
 RUN --mount=target=. \
-    if [ -e build/artifacts/plugins/tanzu_builder ]; then \
+    if [ -e build/artifacts/plugins/tanzu-cli/tanzu_builder ]; then \
         mkdir -p /root/.local/share/tanzu-cli/builder/ && \
-        cp build/artifacts/plugins/tanzu_builder /root/.local/share/tanzu-cli/builder/ && \
+        cp build/artifacts/plugins/tanzu-cli/tanzu_builder /root/.local/share/tanzu-cli/builder/ && \
         chmod +x /root/.local/share/tanzu-cli/builder/tanzu_builder && \
         ln -s /root/.local/share/tanzu-cli/builder/tanzu_builder /usr/bin/tanzu_builder; \
     else \
