@@ -2,9 +2,9 @@ FROM golang:1.19
 
 LABEL org.opencontainers.image.source=https://github.com/vmware-tanzu/build-tooling-for-integrations
 
-ENV DOCKER_CE_VERSION 5:20.10.14~3-0~debian-bullseye
-ENV DOCKER_CE_CLI_VERSION 5:20.10.14~3-0~debian-bullseye
-ENV CONTAINERD_VERSION 1.5.11-1
+ENV DOCKER_CE_VERSION 5:24.0.4-1~debian.12~bookworm
+ENV DOCKER_CE_CLI_VERSION 5:24.0.4-1~debian.12~bookworm
+ENV CONTAINERD_VERSION 1.6.21-1
 ENV PACKAGE_TOOLS_VERSION v0.2.0
 
 RUN apt-get update && \
